@@ -1,0 +1,287 @@
+<header class="header" [class.hidden]="headerHidden">
+  <div class="header-inner">
+    <div class="logo" (click)="scrollToTop()" style="cursor: pointer;">
+  <img class="logo-desktop" src="/logoweb.webp" alt="AppSolution logo" />
+  <img class="logo-mobile" src="/logosmall.webp" alt="AppSolution icon" />
+</div>
+
+
+
+
+    <nav class="nav">
+      <a href="#" (click)="scrollToContact($event)" class="active">
+  Contact Us
+</a>
+
+
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- INTRO -->
+  <section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1 class="hero-title">
+        Mobile applications<br />
+        for your business
+      </h1>
+
+      <p class="hero-subtitle">
+        We build high quality native applications for your business,
+        helping you to keep clients and boost sales.
+      </p>
+    </div>
+
+    <div class="hero-visual">
+  <div class="device-stack">
+    <div class="accent-shape"></div>
+    <img class="ipad" src="/mainIPAD.webp" alt="iPad app" />
+
+    <img class="iphone iphone-1" src="/mainIPHONE1.webp" alt="" />
+    <img class="iphone iphone-2" src="/mainIPHONE2.webp" alt="" />
+    <img class="iphone iphone-3" src="/mainIPHONE3.webp" alt="" />
+    <img class="iphone iphone-4" src="/mainIPHONE4.webp" alt="" />
+  </div>
+</div>
+
+  </div>
+</section>
+
+
+  <!-- MAGIC BLOCKS -->
+  <section class="magic block-1 active" #magic>
+    <div class="content">
+      <div class="text">
+        
+  <h2 class="magic-title">We build native apps</h2>
+    <p class="magic-desc">
+    We create fully native iOS and Android applications, designed specifically for each platform.
+    This allows us to use system-level features, deliver smooth performance, and provide a premium user experience without limitations or lag.
+    </p>
+    </div>
+
+      <img class="magic-icon" src="/firstBlockImg.webp" alt="" />
+    </div>
+  </section>
+
+  <section class="magic block-2" #magic>
+        <div class="content">
+          <div class="text">
+      <h2 class="magic-title">Our goal</h2>
+    <p class="magic-desc">
+    Our mission is to make high-quality, affordable apps for businesses.
+    We provide separate branded applications powered by a shared SaaS platform — keeping commissions low, maintenance simple, and updates continuous.
+    </p>
+
+</div>
+
+      <img class="magic-icon" src="/2img.webp" alt="" />
+    </div>
+  </section>
+
+  <section class="magic block-3" #magic>
+    <div class="content">
+      <div class="text">
+  <h2 class="magic-title">What can you do with us?</h2>
+<p class="magic-desc">
+Your customers can order for takeaway or delivery, collect loyalty points, receive news and promotions, and stay connected through push notifications — all inside your own branded app.
+</p>
+
+</div>
+
+      <img class="magic-icon" src="/3img.webp" alt="" />
+    </div>
+  </section>
+
+  <section class="magic block-4 last-magic" #magic>
+    <div class="content">
+      <div class="text">
+  <h2 class="magic-title">Why us?</h2>
+<p class="magic-desc">
+Building and maintaining your own app is usually expensive, while delivery aggregators charge high commissions.
+Platforms like Wolt or Bolt Food help you find customers — we help you keep them, at the lowest cost possible.
+</p>
+
+</div>
+
+      <img class="magic-icon" src="/4img.webp" alt="" />
+    </div>
+  </section>
+
+
+  <!-- PARTNERSHIP CTA -->
+<section class="partner">
+  <div class="partner-title">
+    Soo, how about we partner up?
+  </div>
+
+  <div class="partner-marquee">
+    <div class="marquee-track">
+      <img src="/screenOne.webp" />
+      <img src="/screen13.webp" />
+      <img src="/screen2.webp" />
+      <img src="/ipad1.webp" />
+      <img src="/screen3.webp" />
+      <img src="/screen4.webp" />
+      <img src="/screen5.webp" />
+      <img src="/ipad2.webp" />
+      <img src="/screen6.webp" />
+      <img src="/screen7.webp" />
+      <img src="/ipad3.webp" />
+      <img src="/screen8.webp" />
+      <img src="/screen9.webp" />
+      <img src="/screen10.webp" />
+      <img src="/screen11.webp" />
+      <img src="/ipad4.webp" />
+      <img src="/screen12.webp" />
+      <img src="/screenOne.webp" />
+      <img src="/screen13.webp" />
+      <img src="/screen2.webp" />
+      <img src="/ipad1.webp" />
+      <img src="/screen3.webp" />
+      <img src="/screen4.webp" />
+      <img src="/screen5.webp" />
+      <img src="/ipad2.webp" />
+      <img src="/screen6.webp" />
+      <img src="/screen7.webp" />
+      <img src="/ipad3.webp" />
+      <img src="/screen8.webp" />
+      <img src="/screen9.webp" />
+      <img src="/screen10.webp" />
+      <img src="/screen11.webp" />
+      <img src="/ipad4.webp" />
+      <img src="/screen12.webp" />
+    </div>
+  </div>
+</section>
+
+  <!-- FAQ -->
+<section class="faq">
+  <h1>FAQ</h1>
+
+  <div class="faq-list">
+    <div
+      class="faq-item"
+      *ngFor="let item of faqItems; let i = index"
+      [class.open]="openFaqIndex === i"
+      (click)="toggleFaq(i)"
+    >
+      <div class="faq-question">
+        <span>{{ item.question }}</span>
+        <span class="arrow">▾</span>
+      </div>
+
+      <div class="faq-answer">
+        <p>{{ item.answer }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+ <section class="reservation" #contact>
+  <div class="reservation-inner">
+    <h1 class="reservation-title">Rezervacija</h1>
+
+    <div class="reservation-layout">
+
+      <!-- LEFT: PACKAGES -->
+      <div
+        class="reservation-packages"
+        [class.dimmed]="selectedServices.length > 0"
+      >
+        <div
+          class="package-card selectable"
+          *ngFor="let pkg of packages"
+          [class.selected]="selectedPackageId === pkg.id"
+          (click)="selectPackage(pkg.id)"
+        >
+          <div class="package-content">
+            <div>
+              <div class="package-name">{{ pkg.name }}</div>
+              <div class="package-placeholder">
+                {{ pkg.description }}
+              </div>
+            </div>
+
+            <div class="package-check">
+              <span *ngIf="selectedPackageId === pkg.id">✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: SERVICES -->
+      <div
+        class="reservation-services"
+        [class.dimmed]="selectedPackageId !== null"
+      >
+        <div class="services-box">
+          <h2 class="services-title">Atskiros paslaugos</h2>
+
+          <div
+            class="service-item selectable"
+            *ngFor="let service of services"
+            [class.selected]="isServiceSelected(service.id)"
+            (click)="selectService(service.id)"
+          >
+            <div class="service-left">
+              <div class="service-check">
+                <span *ngIf="isServiceSelected(service.id)">✓</span>
+              </div>
+
+              <span class="service-name">
+                {{ service.name }}
+              </span>
+            </div>
+
+            <span class="service-price">
+              {{ service.price }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="reservation-action">
+  <button
+    class="reservation-button"
+    [disabled]="!selectedPackageId && selectedServices.length === 0"
+  >
+    <span>Pasirinkti laiką</span>
+    <span class="arrow">→</span>
+  </button>
+</div>
+  </div>
+  
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+
+    <div class="footer-col logo-col">
+      <div class="footer-logo">
+        AppSolution<span>.lt</span>
+      </div>
+
+      <div class="footer-contact">
+        <div>+370 663 07474</div>
+        <div>artiom&#64;appsolution.lt</div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 MB Appsolution. All rights reserved.
+  </div>
+</footer>
+
+
+
+
+</div>
