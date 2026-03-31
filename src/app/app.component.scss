@@ -3517,3 +3517,91 @@ html, body {
   line-height: 1.65;
   color: rgba(255,255,255,0.62);
 }
+
+.delivery-mode-field {
+  margin-top: 8px;
+}
+
+.delivery-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.delivery-mode-button {
+  min-height: 58px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.delivery-mode-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.08);
+}
+
+.delivery-mode-button.active {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+}
+
+.delivery-mode-button-highlight {
+  position: relative;
+  border-color: rgba(255, 77, 79, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 77, 79, 0.18),
+    rgba(255, 77, 79, 0.08)
+  );
+  box-shadow: 0 14px 34px rgba(255, 77, 79, 0.14);
+}
+
+.delivery-mode-button-highlight::before {
+  content: 'Populiaru';
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delivery-mode-button-highlight.active {
+  border-color: #ff4d4f;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 77, 79, 0.26),
+    rgba(255, 77, 79, 0.14)
+  );
+  box-shadow: 0 18px 42px rgba(255, 77, 79, 0.22);
+}
+
+.pickup-return-addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+  .delivery-mode-toggle {
+    grid-template-columns: 1fr;
+  }
+}

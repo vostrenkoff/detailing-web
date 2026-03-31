@@ -22,30 +22,30 @@
 
   <!-- INTRO -->
   <section class="hero">
-  <div class="hero-overlay"></div>
+    <div class="hero-overlay"></div>
 
-  <div class="hero-inner">
-    <div class="hero-content">
-      <div class="hero-badge">Profesionali automobilio priežiūra</div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">Profesionali automobilio priežiūra</div>
 
-      <h1 class="hero-title">
-  Tavo automobilis
-  nusipelno daugiau
-</h1>
+        <h1 class="hero-title">
+          Tavo automobilis
+          nusipelno daugiau
+        </h1>
 
-<p class="hero-subtitle">
-  Profesionalios detailing paslaugos tiems, kurie vertina švarą,
-  estetiką ir kokybę be kompromisų.
-</p>
+        <p class="hero-subtitle">
+          Profesionalios detailing paslaugos tiems, kurie vertina švarą,
+          estetiką ir kokybę be kompromisų.
+        </p>
 
-      <div class="hero-actions">
-        <button class="hero-button" (click)="scrollToContact($event)">
-          Rezervuoti laiką
-        </button>
+        <div class="hero-actions">
+          <button class="hero-button" (click)="scrollToContact($event)">
+            Rezervuoti laiką
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
   <!-- MAGIC BLOCKS -->
   <section class="services-showcase">
@@ -279,12 +279,12 @@
   <section class="reservation" #contact>
     <div class="reservation-inner">
       <div class="reservation-head">
-  <div class="reservation-eyebrow">Greita registracija internetu</div>
-  <h1 class="reservation-title">Rezervuok laiką savo automobiliui</h1>
-  <p class="reservation-subtitle">
-    Pasirink paketą arba atskiras paslaugas, laiką ir pateik savo duomenis per kelis žingsnius.
-  </p>
-</div>
+        <div class="reservation-eyebrow">Greita registracija internetu</div>
+        <h1 class="reservation-title">Rezervuok laiką savo automobiliui</h1>
+        <p class="reservation-subtitle">
+          Pasirink paketą arba atskiras paslaugas, laiką ir pateik savo duomenis per kelis žingsnius.
+        </p>
+      </div>
 
       <!-- STEP 1: PACKAGES + SERVICES -->
       <div class="reservation-layout" *ngIf="reservationStep === 1">
@@ -334,7 +334,82 @@
           </div>
         </div>
       </div>
+      <div class="details-field delivery-mode-field">
+  <label>Automobilio pristatymas *</label>
 
+  <div class="delivery-mode-toggle">
+    <button
+      type="button"
+      class="delivery-mode-button"
+      [class.active]="deliveryMode === 'self'"
+      (click)="setDeliveryMode('self')">
+      Atvyksiu pats
+    </button>
+
+    <button
+      type="button"
+      class="delivery-mode-button delivery-mode-button-highlight"
+      [class.active]="deliveryMode === 'pickup_return'"
+      (click)="setDeliveryMode('pickup_return')">
+      Nemokamas paėmimas ir grąžinimas
+    </button>
+  </div>
+</div>
+
+      <div class="pickup-return-addresses" *ngIf="deliveryMode === 'pickup_return'">
+  <div class="details-field">
+    <label for="pickupAddress">Paėmimo adresas *</label>
+    <input
+      id="pickupAddress"
+      type="text"
+      [(ngModel)]="pickupAddress"
+      placeholder="Įveskite paėmimo adresą"
+      autocomplete="off" />
+  </div>
+
+  <label class="details-checkbox">
+    <input type="checkbox" [(ngModel)]="returnToDifferentAddress" />
+    <span>Grąžinti į kitą vietą</span>
+  </label>
+
+  <div class="details-field" *ngIf="returnToDifferentAddress">
+    <label for="returnAddress">Grąžinimo adresas *</label>
+    <input
+      id="returnAddress"
+      type="text"
+      [(ngModel)]="returnAddress"
+      placeholder="Įveskite grąžinimo adresą"
+      autocomplete="off" />
+  </div>
+
+  <div class="details-field" *ngIf="!returnToDifferentAddress">
+    <label for="returnAddressReadonly">Grąžinimo adresas</label>
+    <input
+      id="returnAddressReadonly"
+      type="text"
+      [value]="pickupAddress"
+      readonly />
+  </div>
+</div>
+      <!-- <div class="summary-row" *ngIf="submittedReservationSummary.deliveryMode === 'pickup_return'">
+        <span>Paėmimo / grąžinimo adresas</span>
+        <strong>{{ submittedReservationSummary.pickupReturnAddress }}</strong>
+      </div>
+
+      <div class="summary-row" *ngIf="submittedReservationSummary.pickupLabel">
+        <span>Paėmimas</span>
+        <strong>{{ submittedReservationSummary.pickupLabel }}</strong>
+      </div>
+
+      <div class="summary-row" *ngIf="submittedReservationSummary.washLabel">
+        <span>Plovimas</span>
+        <strong>{{ submittedReservationSummary.washLabel }}</strong>
+      </div>
+
+      <div class="summary-row" *ngIf="submittedReservationSummary.returnLabel">
+        <span>Grąžinimas</span>
+        <strong>{{ submittedReservationSummary.returnLabel }}</strong>
+      </div> -->
       <div class="reservation-duration" *ngIf="reservationStep === 1 && totalDurationMin > 0">
         <div class="reservation-duration-label">
           Užtruks apie:
@@ -355,51 +430,121 @@
 
       <!-- STEP 2: CALENDAR -->
       <div class="booking-calendar booking-calendar-full" *ngIf="reservationStep === 2">
-        <div class="booking-calendar-topbar">
-          <button type="button" class="calendar-back-button" (click)="backToSelection()">
-            ← Atgal
-          </button>
-        </div>
+  <div class="booking-calendar-topbar">
+    <button type="button" class="calendar-back-button" (click)="backToSelection()">
+      ← Atgal
+    </button>
+  </div>
 
-        <div class="booking-calendar-header">
-          <button type="button" class="month-nav" (click)="previousMonth()">←</button>
-          <div class="booking-calendar-title">{{ currentMonthLabel }}</div>
-          <button type="button" class="month-nav" (click)="nextMonth()">→</button>
-        </div>
+  <div class="booking-calendar-header">
+    <button type="button" class="month-nav" (click)="previousMonth()">←</button>
+    <div class="booking-calendar-title">{{ currentMonthLabel }}</div>
+    <button type="button" class="month-nav" (click)="nextMonth()">→</button>
+  </div>
 
-        <div class="booking-calendar-grid">
-          <div class="weekday" *ngFor="let day of weekdayLabels">{{ day }}</div>
+  <div class="booking-calendar-grid">
+    <div class="weekday" *ngFor="let day of weekdayLabels">{{ day }}</div>
 
-          <button type="button" class="calendar-day" *ngFor="let day of calendarDays"
-            [class.outside]="!isCurrentMonth(day)" [class.available]="canSelectDay(day)"
-            [class.selected]="isSelectedDay(day)" [disabled]="!canSelectDay(day)" (click)="selectDate(day)">
-            {{ day.getDate() }}
-          </button>
-        </div>
+    <button
+      type="button"
+      class="calendar-day"
+      *ngFor="let day of calendarDays"
+      [class.outside]="!isCurrentMonth(day)"
+      [class.available]="canSelectDay(day)"
+      [class.selected]="isSelectedDay(day)"
+      [disabled]="!canSelectDay(day)"
+      (click)="selectDate(day)">
+      {{ day.getDate() }}
+    </button>
+  </div>
 
-        <div class="booking-slots" *ngIf="selectedDate">
-          <div class="booking-slots-title">
-            Laikai {{ selectedDate | date:'yyyy-MM-dd' }}
-          </div>
+  <div class="booking-slots" *ngIf="selectedDate">
+  <div class="booking-slots-title">
+    {{ deliveryMode === 'self'
+        ? ('Laikai ' + (selectedDate | date:'yyyy-MM-dd'))
+        : (pickupReturnStep === 'pickup'
+            ? 'Pasirinkite paėmimo laiką'
+            : 'Pasirinkite grąžinimo laiką') }}
+  </div>
 
-          <div class="booking-slot-grid" *ngIf="timeSlots.length > 0; else noSlots">
-            <button type="button" class="booking-slot" *ngFor="let slot of timeSlots"
-              [class.selected]="selectedTime === slot" (click)="selectTime(slot)">
-              {{ slot }}
-            </button>
-          </div>
+  <!-- SELF -->
+  <div
+    class="booking-slot-grid"
+    *ngIf="deliveryMode === 'self' && timeSlots.length > 0">
+    <button
+      type="button"
+      class="booking-slot"
+      *ngFor="let slot of timeSlots"
+      [class.selected]="selectedTime === slot"
+      (click)="selectTime(slot)">
+      {{ slot }}
+    </button>
+  </div>
 
-          <ng-template #noSlots>
-            <div class="booking-no-slots">Tą dieną laisvų laikų nėra</div>
-          </ng-template>
-        </div>
+  <!-- PICKUP -->
+  <div
+    class="composite-slot-list"
+    *ngIf="deliveryMode === 'pickup_return' && pickupReturnStep === 'pickup' && pickupSlots.length > 0">
+    <button
+      type="button"
+      class="composite-slot-card"
+      *ngFor="let slot of pickupSlots"
+      [class.selected]="selectedPickupSlot === slot"
+      (click)="selectPickupSlot(slot)">
+      <div class="composite-slot-title">
+        Paėmimas
       </div>
-      <div class="reservation-action" *ngIf="reservationStep === 2 && selectedTime">
-        <button class="reservation-button" (click)="goToDetailsStep()">
-          <span>Toliau</span>
-          <span class="arrow">→</span>
-        </button>
+      <div class="composite-slot-line">
+        {{ slot.label }}
       </div>
+    </button>
+  </div>
+
+  <!-- RETURN -->
+  <div
+    class="composite-slot-list"
+    *ngIf="deliveryMode === 'pickup_return' && pickupReturnStep === 'return' && returnSlots.length > 0">
+    <button
+      type="button"
+      class="composite-slot-card"
+      *ngFor="let slot of returnSlots"
+      [class.selected]="selectedReturnSlot === slot"
+      (click)="selectReturnSlot(slot)">
+      <div class="composite-slot-title">
+        Grąžinimas
+      </div>
+      <div class="composite-slot-line">
+        {{ slot.label }}
+      </div>
+    </button>
+  </div>
+
+  <!-- EMPTY -->
+  <div
+    class="booking-no-slots"
+    *ngIf="
+      (deliveryMode === 'self' && timeSlots.length === 0) ||
+      (deliveryMode === 'pickup_return' && pickupReturnStep === 'pickup' && pickupSlots.length === 0) ||
+      (deliveryMode === 'pickup_return' && pickupReturnStep === 'return' && returnSlots.length === 0)
+    ">
+    Tą dieną laisvų laikų nėra
+  </div>
+</div>
+</div>
+      <div
+  class="reservation-action"
+  *ngIf="
+    reservationStep === 2 &&
+    (
+      (deliveryMode === 'self' && selectedTime) ||
+      (deliveryMode === 'pickup_return' && selectedPickupSlot && selectedReturnSlot)
+    )
+  ">
+  <button class="reservation-button" (click)="goToDetailsStep()">
+    <span>Toliau</span>
+    <span class="arrow">→</span>
+  </button>
+</div>
       <div class="reservation-details" *ngIf="reservationStep === 3">
         <div class="booking-calendar-topbar">
           <button type="button" class="calendar-back-button" (click)="backToCalendar()">
@@ -460,7 +605,7 @@
             <div class="details-field">
               <label for="payment">Apmokėjimas *</label>
               <select id="payment" [(ngModel)]="paymentMethod">
-                <option value="moketi_atvykus">Mokėti atvykus</option>
+                <option value="moketi_atvykus">Mokėti atvykus - Grynais</option>
               </select>
             </div>
 
@@ -510,9 +655,22 @@
             </div>
             <div class="summary-row">
               <span>Apmokėjimas</span>
-              <strong>Mokėti atvykus</strong>
+              <strong>Mokėti atvykus - Grynais</strong>
             </div>
+            <!-- <div class="summary-row" *ngIf="deliveryMode === 'pickup_return' && selectedPickupSlot"> -->
+            <!-- <span>Paėmimas</span>
+            <strong>{{ selectedPickupSlot.label }}</strong>
+          </div>
 
+          <div class="summary-row" *ngIf="deliveryMode === 'pickup_return' && selectedReturnSlot">
+            <span>Grąžinimas</span>
+            <strong>{{ selectedReturnSlot.label }}</strong>
+          </div>
+
+          <div class="summary-row" *ngIf="deliveryMode === 'pickup_return' && pickupReturnAddress">
+            <span>Paėmimo adresas</span>
+            <strong>{{ pickupReturnAddress }}</strong>
+          </div> -->
             <div class="summary-total">
               <span>Suma</span>
               <strong>€{{ totalPrice }}</strong>
@@ -596,7 +754,7 @@
 
             <div class="summary-row">
               <span>Apmokėjimas</span>
-              <strong>Mokėti atvykus</strong>
+              <strong>Mokėti atvykus - Grynais</strong>
             </div>
 
             <div class="summary-row">

@@ -27,6 +27,7 @@ interface ReviewItem {
   stars: number;
   text: string;
 }
+
 interface WebsiteServiceItem {
   title: string;
   shortDescription: string;
@@ -38,6 +39,13 @@ interface WebsiteServiceItem {
 interface SelectedWebsiteServiceInfo {
   type: 'package' | 'single';
   index: number;
+}
+interface TransferSlotOption {
+  date: Date;
+  dateKey: string;
+  startMinutes: number;
+  endMinutes: number;
+  label: string;
 }
 @Component({
   selector: 'app-root',
@@ -51,6 +59,245 @@ interface SelectedWebsiteServiceInfo {
 export class AppComponent implements AfterViewInit, OnInit, OnDestroy {
 
 @ViewChild('contact') contactSection!: ElementRef;
+
+deliveryMode: 'self' | 'pickup_return' = 'self';
+pickupReturnAddress = '';
+
+pickupReturnStep: 'pickup' | 'return' = 'pickup';
+
+pickupSlots: TransferSlotOption[] = [];
+returnSlots: TransferSlotOption[] = [];
+
+pickupAddress = '';
+returnAddress = '';
+returnToDifferentAddress = false;
+
+selectedPickupDate: Date | null = null;
+selectedPickupSlot: TransferSlotOption | null = null;
+
+selectedReturnDate: Date | null = null;
+selectedReturnSlot: TransferSlotOption | null = null;
+selectPickupSlot(slot: TransferSlotOption): void {
+  this.selectedPickupDate = slot.date;
+  this.selectedPickupSlot = slot;
+
+  this.selectedReturnDate = null;
+  this.selectedReturnSlot = null;
+  this.returnSlots = [];
+
+  this.pickupReturnStep = 'return';
+
+  // сразу пересчитываем return-слоты для уже выбранного дня
+  if (this.selectedDate) {
+    const allReturnSlots = this.generateTransferSlotsForDay(this.selectedDate);
+
+    this.returnSlots = allReturnSlots.filter(returnSlot =>
+      this.canFitWashBetweenPickupAndReturn(slot, returnSlot)
+    );
+  }
+}
+
+selectReturnSlot(slot: TransferSlotOption): void {
+  this.selectedReturnDate = slot.date;
+  this.selectedReturnSlot = slot;
+}
+findWashWindowBetween(
+  pickupSlot: TransferSlotOption,
+  returnSlot: TransferSlotOption
+): { startMinutes: number; endMinutes: number } | null {
+  if (pickupSlot.dateKey !== returnSlot.dateKey) {
+    return null;
+  }
+
+  const availability = this.availabilityItems.find(item => {
+    const itemDate = this.toDate(item.date);
+    return this.isSameDay(itemDate, pickupSlot.date);
+  });
+
+  if (!availability) return null;
+
+  const workStart = this.toDate(availability.start).getHours() * 60 + this.toDate(availability.start).getMinutes();
+  const workEnd = this.toDate(availability.end).getHours() * 60 + this.toDate(availability.end).getMinutes();
+
+  const windowStart = Math.max(pickupSlot.endMinutes, workStart);
+  const windowEnd = Math.min(returnSlot.startMinutes, workEnd);
+
+  if (windowEnd - windowStart < this.totalDurationMin) {
+    return null;
+  }
+
+  const relevantBusy = this.busySlots
+    .filter(slot => slot.status !== 'cancelled' && slot.status !== 'canceled')
+    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+  let cursor = windowStart;
+
+  for (const slot of relevantBusy) {
+    if (slot.endMinutes <= cursor) continue;
+    if (slot.startMinutes >= windowEnd) break;
+
+    if (slot.startMinutes - cursor >= this.totalDurationMin) {
+      return {
+        startMinutes: cursor,
+        endMinutes: cursor + this.totalDurationMin
+      };
+    }
+
+    cursor = Math.max(cursor, slot.endMinutes);
+  }
+
+  if (windowEnd - cursor >= this.totalDurationMin) {
+    return {
+      startMinutes: cursor,
+      endMinutes: cursor + this.totalDurationMin
+    };
+  }
+
+  return null;
+}
+canFitWashBetweenPickupAndReturn(
+  pickupSlot: TransferSlotOption,
+  returnSlot: TransferSlotOption
+): boolean {
+  if (pickupSlot.dateKey !== returnSlot.dateKey) {
+    return false;
+  }
+
+  const washStart = pickupSlot.endMinutes;
+  const washEndLimit = returnSlot.startMinutes;
+
+  if (washEndLimit <= washStart) {
+    return false;
+  }
+
+  const availability = this.availabilityItems.find(item => {
+    const itemDate = this.toDate(item.date);
+    return this.isSameDay(itemDate, pickupSlot.date);
+  });
+
+  if (!availability) return false;
+
+  const workStart = this.toDate(availability.start).getHours() * 60 + this.toDate(availability.start).getMinutes();
+  const workEnd = this.toDate(availability.end).getHours() * 60 + this.toDate(availability.end).getMinutes();
+
+  const windowStart = Math.max(washStart, workStart);
+  const windowEnd = Math.min(washEndLimit, workEnd);
+
+  if (windowEnd - windowStart < this.totalDurationMin) {
+    return false;
+  }
+
+  const relevantBusy = this.busySlots
+    .filter(slot => slot.status !== 'cancelled' && slot.status !== 'canceled')
+    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+  let cursor = windowStart;
+
+  for (const slot of relevantBusy) {
+    if (slot.endMinutes <= cursor) continue;
+    if (slot.startMinutes >= windowEnd) break;
+
+    if (slot.startMinutes - cursor >= this.totalDurationMin) {
+      return true;
+    }
+
+    cursor = Math.max(cursor, slot.endMinutes);
+  }
+
+  return windowEnd - cursor >= this.totalDurationMin;
+}
+generateTransferSlotsForDay(day: Date): TransferSlotOption[] {
+  const availability = this.availabilityItems.find(item => {
+    const itemDate = this.toDate(item.date);
+    return this.isSameDay(itemDate, day);
+  });
+
+  if (!availability) return [];
+
+  const start = this.toDate(availability.start);
+  const end = this.toDate(availability.end);
+
+  const result: TransferSlotOption[] = [];
+  const stepMin = 30;
+  const slotDurationMin = 60;
+
+  let current = this.roundUpToNextHalfHour(start);
+
+  while (true) {
+    const slotEnd = new Date(current.getTime() + slotDurationMin * 60000);
+    if (slotEnd > end) break;
+
+    const startMinutes = current.getHours() * 60 + current.getMinutes();
+    const endMinutes = startMinutes + slotDurationMin;
+
+    const hasConflict = this.busySlots.some(slot => {
+      if (slot.status === 'cancelled' || slot.status === 'canceled') {
+        return false;
+      }
+
+      return this.isTimeRangeOverlapping(
+        startMinutes,
+        endMinutes,
+        slot.startMinutes,
+        slot.endMinutes
+      );
+    });
+
+    if (!hasConflict) {
+      result.push({
+        date: new Date(day),
+        dateKey: this.formatDateKey(day),
+        startMinutes,
+        endMinutes,
+        label: `${this.minutesToTimeString(startMinutes)}–${this.minutesToTimeString(endMinutes)}`
+      });
+    }
+
+    current = new Date(current.getTime() + stepMin * 60000);
+  }
+
+  return result;
+}
+get effectiveReturnAddress(): string {
+  return this.returnToDifferentAddress
+    ? this.returnAddress.trim()
+    : this.pickupAddress.trim();
+}
+onDeliveryModeChange(): void {
+  this.selectedDate = null;
+  this.selectedTime = null;
+  this.timeSlots = [];
+  this.selectedDateKey = null;
+
+  this.resetPickupReturnCalendarState();
+
+  if (this.deliveryMode === 'self') {
+    this.pickupAddress = '';
+    this.returnAddress = '';
+    this.returnToDifferentAddress = false;
+  }
+}
+
+hasBusyConflict(startMin: number, endMin: number): boolean {
+  return this.busySlots.some(slot => {
+    if (slot.status === 'cancelled' || slot.status === 'canceled') {
+      return false;
+    }
+
+    return this.isTimeRangeOverlapping(
+      startMin,
+      endMin,
+      slot.startMinutes,
+      slot.endMinutes
+    );
+  });
+}
+
+roundMinutesUpToNextHalfHour(totalMin: number): number {
+  const remainder = totalMin % 30;
+  if (remainder === 0) return totalMin;
+  return totalMin + (30 - remainder);
+}
 
 websitePackages: WebsiteServiceItem[] = [
   {
@@ -403,19 +650,35 @@ closeWebsiteServiceInfo(): void {
     return `${datePart}-${randomPart}`;
   }
   get isDetailsStepValid(): boolean {
-    return !!(
-      this.customerFirstName.trim() &&
-      this.customerLastName.trim() &&
-      this.customerCountryCode.trim() &&
-      this.customerPhone.trim() &&
-      this.customerEmail.trim() &&
-      this.selectedAddress.trim() &&
-      this.paymentMethod.trim() &&
-      this.selectedDate &&
-      this.selectedTime
-    );
-  }
+  const hasTransportAddress =
+    this.deliveryMode === 'self'
+      ? true
+      : !!this.pickupAddress.trim() &&
+        (!this.returnToDifferentAddress || !!this.returnAddress.trim());
 
+  const hasTimeSelection =
+    this.deliveryMode === 'self'
+      ? !!this.selectedDate && !!this.selectedTime
+      : !!this.selectedPickupSlot && !!this.selectedReturnSlot;
+
+  return !!(
+    this.customerFirstName.trim() &&
+    this.customerLastName.trim() &&
+    this.customerCountryCode.trim() &&
+    this.customerPhone.trim() &&
+    this.customerEmail.trim() &&
+    this.selectedAddress.trim() &&
+    this.paymentMethod.trim() &&
+    hasTimeSelection &&
+    hasTransportAddress
+  );
+}
+setDeliveryMode(mode: 'self' | 'pickup_return'): void {
+  if (this.deliveryMode === mode) return;
+
+  this.deliveryMode = mode;
+  this.onDeliveryModeChange();
+}
  async submitReservation() {
   if (!this.isDetailsStepValid || this.isSubmittingReservation) return;
 
@@ -423,43 +686,148 @@ closeWebsiteServiceInfo(): void {
 
   try {
     const orderNumber = this.generateOrderNumber();
+    const isPickupReturn = this.deliveryMode === 'pickup_return';
 
-    const dateKey = this.selectedDate ? this.formatDateKey(this.selectedDate) : null;
-    const startMinutes = this.getSelectedStartMinutes();
-    const endMinutes = this.getSelectedEndMinutes();
+    let dateKey: string | null = null;
+    let bookingDate: Date | null = null;
 
-    if (!dateKey || startMinutes === null || endMinutes === null) {
-      alert('Neteisingi rezervacijos duomenys.');
-      return;
+    let bookingStartMinutes: number | null = null;
+    let bookingEndMinutes: number | null = null;
+
+    let pickupSlot: TransferSlotOption | null = null;
+    let returnSlot: TransferSlotOption | null = null;
+    let washWindow: { startMinutes: number; endMinutes: number } | null = null;
+
+    if (isPickupReturn) {
+      pickupSlot = this.selectedPickupSlot;
+      returnSlot = this.selectedReturnSlot;
+
+      if (!pickupSlot || !returnSlot) {
+        alert('Pasirinkite paėmimo ir grąžinimo laiką.');
+        return;
+      }
+
+      // MVP: пока поддерживаем только один день
+      if (pickupSlot.dateKey !== returnSlot.dateKey) {
+        alert('Šiuo metu paėmimas ir grąžinimas turi būti tą pačią dieną.');
+        return;
+      }
+
+      dateKey = pickupSlot.dateKey;
+      bookingDate = pickupSlot.date;
+
+      const sameDayBusySlots = await new Promise<BusySlot[]>((resolve) => {
+        this.busySlotsService
+          .getBusySlotsByDate(dateKey!)
+          .pipe(take(1))
+          .subscribe(data => resolve(data));
+      });
+
+      const activeBusySlots = sameDayBusySlots.filter(
+        slot => slot.status !== 'cancelled' && slot.status !== 'canceled'
+      );
+
+      // временно подменяем busySlots, чтобы findWashWindowBetween работал на свежих данных
+      this.busySlots = activeBusySlots;
+
+      // проверка, что pickup и return сами по себе не конфликтуют
+      const pickupConflict = activeBusySlots.some(existingSlot =>
+        this.isTimeRangeOverlapping(
+          pickupSlot!.startMinutes,
+          pickupSlot!.endMinutes,
+          existingSlot.startMinutes,
+          existingSlot.endMinutes
+        )
+      );
+
+      const returnConflict = activeBusySlots.some(existingSlot =>
+        this.isTimeRangeOverlapping(
+          returnSlot!.startMinutes,
+          returnSlot!.endMinutes,
+          existingSlot.startMinutes,
+          existingSlot.endMinutes
+        )
+      );
+
+      if (pickupConflict || returnConflict) {
+        alert('Pasirinktas paėmimo arba grąžinimo laikas jau užimtas.');
+        return;
+      }
+
+      washWindow = this.findWashWindowBetween(pickupSlot, returnSlot);
+
+      if (!washWindow) {
+        alert('Tarp paėmimo ir grąžinimo nėra pakankamai laiko automobilio plovimui.');
+        return;
+      }
+
+      bookingStartMinutes = washWindow.startMinutes;
+      bookingEndMinutes = washWindow.endMinutes;
+
+      // дополнительная защита: вдруг мойка конфликтует
+      const washConflict = activeBusySlots.some(existingSlot =>
+        this.isTimeRangeOverlapping(
+          bookingStartMinutes!,
+          bookingEndMinutes!,
+          existingSlot.startMinutes,
+          existingSlot.endMinutes
+        )
+      );
+
+      if (washConflict) {
+        alert('Tarp paėmimo ir grąžinimo nebeliko laisvo lango plovimui. Pasirinkite kitą laiką.');
+        return;
+      }
+    } else {
+      if (!this.selectedDate) {
+        alert('Pasirinkite datą.');
+        return;
+      }
+
+      dateKey = this.formatDateKey(this.selectedDate);
+      bookingDate = this.selectedDate;
+
+      bookingStartMinutes = this.getSelectedStartMinutes();
+      bookingEndMinutes = this.getSelectedEndMinutes();
+
+      if (bookingStartMinutes === null || bookingEndMinutes === null) {
+        alert('Neteisingi rezervacijos duomenys.');
+        return;
+      }
+
+      const sameDayBusySlots = await new Promise<BusySlot[]>((resolve) => {
+        this.busySlotsService
+          .getBusySlotsByDate(dateKey!)
+          .pipe(take(1))
+          .subscribe(data => resolve(data));
+      });
+
+      const hasConflict = sameDayBusySlots.some(existingSlot => {
+        if (existingSlot.status === 'cancelled' || existingSlot.status === 'canceled') {
+          return false;
+        }
+
+        return this.isTimeRangeOverlapping(
+          bookingStartMinutes!,
+          bookingEndMinutes!,
+          existingSlot.startMinutes,
+          existingSlot.endMinutes
+        );
+      });
+
+      if (hasConflict) {
+        alert('Pasirinktas laikas jau užimtas. Prašome pasirinkti kitą laiką.');
+
+        if (this.selectedDate) {
+          this.selectDate(this.selectedDate);
+        }
+
+        return;
+      }
     }
 
-    const sameDayBusySlots = await new Promise<BusySlot[]>((resolve) => {
-      this.busySlotsService
-        .getBusySlotsByDate(dateKey)
-        .pipe(take(1))
-        .subscribe(data => resolve(data));
-    });
-
-    const hasConflict = sameDayBusySlots.some(slot => {
-      if (slot.status === 'cancelled' || slot.status === 'canceled') {
-        return false;
-      }
-
-      return this.isTimeRangeOverlapping(
-        startMinutes,
-        endMinutes,
-        slot.startMinutes,
-        slot.endMinutes
-      );
-    });
-
-    if (hasConflict) {
-      alert('Pasirinktas laikas jau užimtas. Prašome pasirinkti kitą laiką.');
-
-      if (this.selectedDate) {
-        this.selectDate(this.selectedDate);
-      }
-
+    if (!dateKey || !bookingDate || bookingStartMinutes === null || bookingEndMinutes === null) {
+      alert('Neteisingi rezervacijos duomenys.');
       return;
     }
 
@@ -480,13 +848,50 @@ closeWebsiteServiceInfo(): void {
       paymentMethod: this.paymentMethod,
       allowPromoFilming: this.allowPromoFilming,
 
+      delivery: {
+  mode: this.deliveryMode,
+  pickupAddress: isPickupReturn ? this.pickupAddress.trim() : null,
+returnAddress: isPickupReturn ? this.effectiveReturnAddress : null,
+returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
+
+  pickupDateKey: isPickupReturn ? pickupSlot!.dateKey : null,
+  pickupStartMinutes: isPickupReturn ? pickupSlot!.startMinutes : null,
+  pickupEndMinutes: isPickupReturn ? pickupSlot!.endMinutes : null,
+
+  returnDateKey: isPickupReturn ? returnSlot!.dateKey : null,
+  returnStartMinutes: isPickupReturn ? returnSlot!.startMinutes : null,
+  returnEndMinutes: isPickupReturn ? returnSlot!.endMinutes : null,
+
+  pickup: isPickupReturn ? {
+    date: pickupSlot!.date.toISOString(),
+    dateKey: pickupSlot!.dateKey,
+    startMinutes: pickupSlot!.startMinutes,
+    endMinutes: pickupSlot!.endMinutes,
+    label: pickupSlot!.label
+  } : null,
+
+  return: isPickupReturn ? {
+    date: returnSlot!.date.toISOString(),
+    dateKey: returnSlot!.dateKey,
+    startMinutes: returnSlot!.startMinutes,
+    endMinutes: returnSlot!.endMinutes,
+    label: returnSlot!.label
+  } : null
+},
+
       booking: {
-        date: this.selectedDate ? this.selectedDate.toISOString() : null,
+        date: bookingDate.toISOString(),
         dateKey,
-        dateLabel: this.formattedSelectedDate,
-        time: this.selectedTime,
-        startMinutes,
-        endMinutes,
+        dateLabel: bookingDate.toLocaleDateString('lt-LT', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        time: isPickupReturn
+          ? this.minutesToTimeString(bookingStartMinutes)
+          : this.selectedTime,
+        startMinutes: bookingStartMinutes,
+        endMinutes: bookingEndMinutes,
         durationMin: this.totalDurationMin
       },
 
@@ -508,21 +913,137 @@ closeWebsiteServiceInfo(): void {
     };
 
     const batch = writeBatch(this.firestore);
-
     const reservationRef = doc(collection(this.firestore, 'reservations'));
-    const busySlotRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
 
     batch.set(reservationRef, reservationPayload);
 
-    batch.set(busySlotRef, {
-      startMinutes,
-      endMinutes,
-      time: this.selectedTime,
-      durationMin: this.totalDurationMin,
-      reservationId: reservationRef.id,
-      status: 'active',
-      createdAt: serverTimestamp()
-    });
+    if (isPickupReturn) {
+  const busySlotPickupRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+  const busySlotWashRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+  const busySlotReturnRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+
+  batch.set(busySlotPickupRef, {
+    type: 'pickup',
+    startMinutes: pickupSlot!.startMinutes,
+    endMinutes: pickupSlot!.endMinutes,
+    durationMin: 60,
+    reservationId: reservationRef.id,
+    status: 'active',
+    createdAt: serverTimestamp()
+  });
+
+  batch.set(busySlotWashRef, {
+    type: 'wash',
+    startMinutes: washWindow!.startMinutes,
+    endMinutes: washWindow!.endMinutes,
+    durationMin: this.totalDurationMin,
+    reservationId: reservationRef.id,
+    status: 'active',
+    createdAt: serverTimestamp()
+  });
+
+  batch.set(busySlotReturnRef, {
+    type: 'return',
+    startMinutes: returnSlot!.startMinutes,
+    endMinutes: returnSlot!.endMinutes,
+    durationMin: 60,
+    reservationId: reservationRef.id,
+    status: 'active',
+    createdAt: serverTimestamp()
+  });
+
+  const pickupTaskRef = doc(collection(this.firestore, 'pickupsDropoffs'));
+  const returnTaskRef = doc(collection(this.firestore, 'pickupsDropoffs'));
+
+  batch.set(pickupTaskRef, {
+    type: 'pickup',
+    reservationId: reservationRef.id,
+    orderNumber,
+    status: 'new',
+    createdAt: serverTimestamp(),
+
+    date: pickupSlot!.date.toISOString(),
+    dateKey: pickupSlot!.dateKey,
+    startMinutes: pickupSlot!.startMinutes,
+    endMinutes: pickupSlot!.endMinutes,
+    label: pickupSlot!.label,
+
+    customer: {
+      firstName: this.customerFirstName.trim(),
+      lastName: this.customerLastName.trim(),
+      phone: this.fullPhoneNumber,
+      email: this.customerEmail.trim()
+    },
+
+    vehicleAddress: this.pickupReturnAddress.trim(),
+    serviceAddress: this.selectedAddress,
+
+    selection: {
+      packageId: this.selectedPackage?.id || null,
+      packageTitle: this.selectedPackage?.title || null,
+      services: this.selectedServiceItems.map(service => ({
+        id: service.id,
+        title: service.title,
+        price: service.price,
+        durationMin: service.durationMin
+      }))
+    },
+
+    paymentMethod: this.paymentMethod,
+    allowPromoFilming: this.allowPromoFilming
+  });
+
+  batch.set(returnTaskRef, {
+    type: 'return',
+    reservationId: reservationRef.id,
+    orderNumber,
+    status: 'new',
+    createdAt: serverTimestamp(),
+
+    date: returnSlot!.date.toISOString(),
+    dateKey: returnSlot!.dateKey,
+    startMinutes: returnSlot!.startMinutes,
+    endMinutes: returnSlot!.endMinutes,
+    label: returnSlot!.label,
+
+    customer: {
+      firstName: this.customerFirstName.trim(),
+      lastName: this.customerLastName.trim(),
+      phone: this.fullPhoneNumber,
+      email: this.customerEmail.trim()
+    },
+
+    vehicleAddress: this.pickupReturnAddress.trim(),
+    serviceAddress: this.selectedAddress,
+
+    selection: {
+      packageId: this.selectedPackage?.id || null,
+      packageTitle: this.selectedPackage?.title || null,
+      services: this.selectedServiceItems.map(service => ({
+        id: service.id,
+        title: service.title,
+        price: service.price,
+        durationMin: service.durationMin
+      }))
+    },
+
+    paymentMethod: this.paymentMethod,
+    allowPromoFilming: this.allowPromoFilming
+  });
+} else {
+  const busySlotRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+
+  batch.set(busySlotRef, {
+    type: 'wash',
+    startMinutes: bookingStartMinutes,
+    endMinutes: bookingEndMinutes,
+    time: this.selectedTime,
+    durationMin: this.totalDurationMin,
+    reservationId: reservationRef.id,
+    status: 'active',
+    createdAt: serverTimestamp()
+  });
+}
 
     await batch.commit();
 
@@ -531,26 +1052,64 @@ closeWebsiteServiceInfo(): void {
     this.reservationStep = 4;
 
     this.submittedReservationSummary = {
-      id: reservationRef.id,
-      orderNumber,
-      firstName: this.customerFirstName.trim(),
-      lastName: this.customerLastName.trim(),
-      phone: this.fullPhoneNumber,
-      email: this.customerEmail.trim(),
-      address: this.selectedAddress,
-      discountCode: this.discountCode.trim(),
-      paymentMethod: this.paymentMethod,
-      allowPromoFilming: this.allowPromoFilming,
-      dateLabel: this.formattedSelectedDate,
-      time: this.selectedTime,
-      duration: this.formattedDuration,
-      totalPrice: this.totalPrice,
-      packageTitle: this.selectedPackage?.title || null,
-      services: this.selectedServiceItems.map(service => ({
-        title: service.title,
-        price: service.price
-      }))
-    };
+  id: reservationRef.id,
+  orderNumber,
+  firstName: this.customerFirstName.trim(),
+  lastName: this.customerLastName.trim(),
+  phone: this.fullPhoneNumber,
+  email: this.customerEmail.trim(),
+  address: this.selectedAddress,
+
+  deliveryMode: this.deliveryMode,
+  pickupReturnAddress: isPickupReturn ? this.pickupReturnAddress.trim() : null,
+
+  pickup: isPickupReturn ? {
+    date: pickupSlot!.date.toISOString(),
+    dateKey: pickupSlot!.dateKey,
+    startMinutes: pickupSlot!.startMinutes,
+    endMinutes: pickupSlot!.endMinutes,
+    label: pickupSlot!.label
+  } : null,
+
+  wash: isPickupReturn ? {
+    startMinutes: washWindow!.startMinutes,
+    endMinutes: washWindow!.endMinutes,
+    label: `${this.minutesToTimeString(washWindow!.startMinutes)}–${this.minutesToTimeString(washWindow!.endMinutes)}`
+  } : null,
+
+  return: isPickupReturn ? {
+    date: returnSlot!.date.toISOString(),
+    dateKey: returnSlot!.dateKey,
+    startMinutes: returnSlot!.startMinutes,
+    endMinutes: returnSlot!.endMinutes,
+    label: returnSlot!.label
+  } : null,
+
+  pickupLabel: isPickupReturn ? pickupSlot!.label : null,
+  washLabel: isPickupReturn
+    ? `${this.minutesToTimeString(washWindow!.startMinutes)}–${this.minutesToTimeString(washWindow!.endMinutes)}`
+    : null,
+  returnLabel: isPickupReturn ? returnSlot!.label : null,
+
+  discountCode: this.discountCode.trim(),
+  paymentMethod: this.paymentMethod,
+  allowPromoFilming: this.allowPromoFilming,
+  dateLabel: bookingDate.toLocaleDateString('lt-LT', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }),
+  time: isPickupReturn
+    ? this.minutesToTimeString(bookingStartMinutes)
+    : this.selectedTime,
+  duration: this.formattedDuration,
+  totalPrice: this.totalPrice,
+  packageTitle: this.selectedPackage?.title || null,
+  services: this.selectedServiceItems.map(service => ({
+    title: service.title,
+    price: service.price
+  }))
+};
   } catch (error) {
     console.error('Failed to submit reservation:', error);
     alert('Nepavyko išsaugoti rezervacijos. Bandykite dar kartą.');
@@ -593,27 +1152,54 @@ closeWebsiteServiceInfo(): void {
   }
 
   goToDetailsStep() {
-    if (!this.selectedDate || !this.selectedTime) return;
+  const hasTimeSelection =
+    this.deliveryMode === 'self'
+      ? !!this.selectedDate && !!this.selectedTime
+      : !!this.selectedPickupSlot && !!this.selectedReturnSlot;
 
-    this.reservationStep = 3;
-  }
+  if (!hasTimeSelection) return;
+
+  this.reservationStep = 3;
+}
 
   backToSelection() {
-    this.reservationStep = 1;
-    this.calendarOpen = false;
-  }
+  this.reservationStep = 1;
+  this.calendarOpen = false;
+
+  this.selectedDate = null;
+  this.selectedTime = null;
+  this.timeSlots = [];
+  this.selectedDateKey = null;
+
+  this.resetPickupReturnCalendarState();
+}
 
   backToCalendar() {
     this.reservationStep = 2;
     this.calendarOpen = true;
   }
-  openCalendar() {
+ private resetPickupReturnCalendarState(): void {
+  this.pickupReturnStep = 'pickup';
+
+  this.pickupSlots = [];
+  this.returnSlots = [];
+
+  this.selectedPickupDate = null;
+  this.selectedPickupSlot = null;
+
+  this.selectedReturnDate = null;
+  this.selectedReturnSlot = null;
+}
+
+openCalendar() {
   if (!this.selectedPackageId && this.selectedServices.length === 0) return;
 
   this.selectedDate = null;
   this.selectedTime = null;
   this.timeSlots = [];
   this.selectedDateKey = null;
+
+  this.resetPickupReturnCalendarState();
 
   this.calendarOpen = true;
   this.reservationStep = 2;
@@ -738,26 +1324,38 @@ closeWebsiteServiceInfo(): void {
     return this.selectedDate ? this.isSameDay(this.selectedDate, day) : false;
   }
 
-  selectDate(day: Date) {
-    if (!this.canSelectDay(day)) return;
+selectDate(day: Date) {
+  if (!this.canSelectDay(day)) return;
 
-    this.selectedDate = day;
-    this.selectedTime = null;
+  this.selectedDate = day;
+  this.selectedTime = null;
 
-    const dateKey = this.formatDateKey(day);
-    this.selectedDateKey = dateKey;
+  const dateKey = this.formatDateKey(day);
+  this.selectedDateKey = dateKey;
 
-    this.busySlotsService
-      .getBusySlotsByDate(dateKey)
-      .pipe(take(1))
-      .subscribe(data => {
-        this.busySlots = data.filter(
-          slot => slot.status !== 'cancelled' && slot.status !== 'canceled'
-        );
+  this.busySlotsService
+    .getBusySlotsByDate(dateKey)
+    .pipe(take(1))
+    .subscribe(data => {
+      this.busySlots = data.filter(
+        slot => slot.status !== 'cancelled' && slot.status !== 'canceled'
+      );
 
+      if (this.deliveryMode === 'pickup_return') {
+        if (this.pickupReturnStep === 'pickup') {
+          this.pickupSlots = this.generateTransferSlotsForDay(day);
+        } else {
+          const allReturnSlots = this.generateTransferSlotsForDay(day);
+
+          this.returnSlots = this.selectedPickupSlot
+            ? allReturnSlots.filter(slot => this.canFitWashBetweenPickupAndReturn(this.selectedPickupSlot!, slot))
+            : [];
+        }
+      } else {
         this.generateTimeSlotsForDay(day);
-      });
-  }
+      }
+    });
+}
 
   generateTimeSlotsForDay(day: Date) {
     const availability = this.availabilityItems.find(item => {
