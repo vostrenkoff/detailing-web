@@ -1,17 +1,17 @@
 <header class="header" [class.hidden]="headerHidden">
   <div class="header-inner">
     <div class="logo" (click)="scrollToTop()" style="cursor: pointer;">
-  <img class="logo-desktop" src="/logoweb.webp" alt="AppSolution logo" />
-  <img class="logo-mobile" src="/logosmall.webp" alt="AppSolution icon" />
-</div>
+      <img class="logo-desktop" src="/logoweb.webp" alt="AppSolution logo" />
+      <img class="logo-mobile" src="/logosmall.webp" alt="AppSolution icon" />
+    </div>
 
 
 
 
     <nav class="nav">
       <a href="#" (click)="scrollToContact($event)" class="active">
-  Contact Us
-</a>
+        Contact Us
+      </a>
 
 
     </nav>
@@ -22,61 +22,158 @@
 
   <!-- INTRO -->
   <section class="hero">
+  <div class="hero-overlay"></div>
+
   <div class="hero-inner">
-    <div class="hero-text">
+    <div class="hero-content">
+      <div class="hero-badge">Profesionali automobilio priežiūra</div>
+
       <h1 class="hero-title">
-        Mobile applications<br />
-        for your business
-      </h1>
+  Tavo automobilis
+  nusipelno daugiau
+</h1>
 
-      <p class="hero-subtitle">
-        We build high quality native applications for your business,
-        helping you to keep clients and boost sales.
-      </p>
+<p class="hero-subtitle">
+  Profesionalios detailing paslaugos tiems, kurie vertina švarą,
+  estetiką ir kokybę be kompromisų.
+</p>
+
+      <div class="hero-actions">
+        <button class="hero-button" (click)="scrollToContact($event)">
+          Rezervuoti laiką
+        </button>
+      </div>
     </div>
-
-    <div class="hero-visual">
-  <div class="device-stack">
-    <div class="accent-shape"></div>
-    <img class="ipad" src="/mainIPAD.webp" alt="iPad app" />
-
-    <img class="iphone iphone-1" src="/mainIPHONE1.webp" alt="" />
-    <img class="iphone iphone-2" src="/mainIPHONE2.webp" alt="" />
-    <img class="iphone iphone-3" src="/mainIPHONE3.webp" alt="" />
-    <img class="iphone iphone-4" src="/mainIPHONE4.webp" alt="" />
-  </div>
-</div>
-
   </div>
 </section>
 
-
   <!-- MAGIC BLOCKS -->
-  <section class="magic block-1 active" #magic>
-    <div class="content">
-      <div class="text">
-        
-  <h2 class="magic-title">We build native apps</h2>
-    <p class="magic-desc">
-    We create fully native iOS and Android applications, designed specifically for each platform.
-    This allows us to use system-level features, deliver smooth performance, and provide a premium user experience without limitations or lag.
-    </p>
-    </div>
+  <section class="services-showcase">
+    <div class="services-showcase-inner">
+      <div class="services-showcase-head">
+        <h2 class="services-showcase-title">Mūsų paslaugos</h2>
+        <p class="services-showcase-subtitle">
+          Rinkitės iš paruoštų paketų arba atskirų paslaugų pagal savo poreikius.
+        </p>
+      </div>
 
-      <img class="magic-icon" src="/firstBlockImg.webp" alt="" />
+      <div class="services-showcase-grid">
+        <!-- LEFT: PACKAGES -->
+        <div class="services-column">
+          <div class="services-column-header">
+            <h3>Paketai</h3>
+            <span>Populiariausi pasirinkimai</span>
+          </div>
+
+          <div class="service-list">
+            <div class="service-card package-card" *ngFor="let item of websitePackages; let i = index"
+              [class.active]="selectedServiceInfo?.type === 'package' && selectedServiceInfo?.index === i">
+              <div class="service-main">
+                <div class="service-main-left">
+                  <div class="service-title-row">
+                    <div class="service-title">{{ item.title }}</div>
+
+                    <button type="button" class="service-info-button"
+                      (click)="toggleWebsiteServiceInfo('package', i, $event)">
+                      i
+                    </button>
+                  </div>
+
+                  <div class="service-desc">
+                    {{ item.shortDescription }}
+                  </div>
+                </div>
+
+                <div class="service-price">
+                  {{ item.price }}
+                </div>
+              </div>
+
+              <!-- ВОТ ЭТО ГЛАВНОЕ -->
+              <div class="service-info-panel"
+                *ngIf="selectedServiceInfo?.type === 'package' && selectedServiceInfo?.index === i">
+                <div class="service-info-panel-inner">
+                  <div class="service-info-title">{{ item.title }}</div>
+                  <p class="service-info-text">{{ item.fullDescription }}</p>
+
+                  <div class="service-info-meta" *ngIf="item.includes?.length">
+                    <div class="service-info-meta-title">Įeina</div>
+
+                    <div class="service-info-tags">
+                      <span class="service-tag" *ngFor="let inc of item.includes">
+                        {{ inc }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: SEPARATE SERVICES -->
+        <div class="services-column">
+          <div class="services-column-header">
+            <h3>Atskiros paslaugos</h3>
+            <span>Pasirink pagal poreikį</span>
+          </div>
+
+          <div class="services-list-table">
+            <div class="services-list-row" *ngFor="let item of websiteSingleServices; let i = index"
+              [class.active]="selectedServiceInfo?.type === 'single' && selectedServiceInfo?.index === i">
+              <div class="services-list-main">
+                <div class="services-list-name">
+                  {{ item.title }}
+                </div>
+
+                <div class="services-list-right">
+                  <div class="services-list-price">
+                    {{ item.price }}
+                  </div>
+
+                  <button type="button" class="service-info-button compact"
+                    (click)="toggleWebsiteServiceInfo('single', i, $event)" aria-label="Daugiau informacijos">
+                    i
+                  </button>
+                </div>
+              </div>
+
+              <div class="service-info-panel list-mode"
+                *ngIf="selectedServiceInfo?.type === 'single' && selectedServiceInfo?.index === i">
+                <div class="service-info-panel-inner">
+                  <div class="service-info-title">{{ item.title }}</div>
+                  <p class="service-info-text">{{ item.fullDescription }}</p>
+
+                  <div class="service-info-meta" *ngIf="item.includes?.length">
+                    <div class="service-info-meta-title">Įeina</div>
+
+                    <div class="service-info-tags">
+                      <span class="service-tag" *ngFor="let inc of item.includes">
+                        {{ inc }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </section>
 
   <section class="magic block-2" #magic>
-        <div class="content">
-          <div class="text">
-      <h2 class="magic-title">Our goal</h2>
-    <p class="magic-desc">
-    Our mission is to make high-quality, affordable apps for businesses.
-    We provide separate branded applications powered by a shared SaaS platform — keeping commissions low, maintenance simple, and updates continuous.
-    </p>
+    <div class="content">
+      <div class="text">
+        <h2 class="magic-title">Our goal</h2>
+        <p class="magic-desc">
+          Our mission is to make high-quality, affordable apps for businesses.
+          We provide separate branded applications powered by a shared SaaS platform — keeping commissions low,
+          maintenance simple, and updates continuous.
+        </p>
 
-</div>
+      </div>
 
       <img class="magic-icon" src="/2img.webp" alt="" />
     </div>
@@ -85,12 +182,13 @@
   <section class="magic block-3" #magic>
     <div class="content">
       <div class="text">
-  <h2 class="magic-title">What can you do with us?</h2>
-<p class="magic-desc">
-Your customers can order for takeaway or delivery, collect loyalty points, receive news and promotions, and stay connected through push notifications — all inside your own branded app.
-</p>
+        <h2 class="magic-title">What can you do with us?</h2>
+        <p class="magic-desc">
+          Your customers can order for takeaway or delivery, collect loyalty points, receive news and promotions, and
+          stay connected through push notifications — all inside your own branded app.
+        </p>
 
-</div>
+      </div>
 
       <img class="magic-icon" src="/3img.webp" alt="" />
     </div>
@@ -99,13 +197,14 @@ Your customers can order for takeaway or delivery, collect loyalty points, recei
   <section class="magic block-4 last-magic" #magic>
     <div class="content">
       <div class="text">
-  <h2 class="magic-title">Why us?</h2>
-<p class="magic-desc">
-Building and maintaining your own app is usually expensive, while delivery aggregators charge high commissions.
-Platforms like Wolt or Bolt Food help you find customers — we help you keep them, at the lowest cost possible.
-</p>
+        <h2 class="magic-title">Why us?</h2>
+        <p class="magic-desc">
+          Building and maintaining your own app is usually expensive, while delivery aggregators charge high
+          commissions.
+          Platforms like Wolt or Bolt Food help you find customers — we help you keep them, at the lowest cost possible.
+        </p>
 
-</div>
+      </div>
 
       <img class="magic-icon" src="/4img.webp" alt="" />
     </div>
@@ -113,98 +212,100 @@ Platforms like Wolt or Bolt Food help you find customers — we help you keep th
 
 
   <!-- PARTNERSHIP CTA -->
-<section class="partner">
-  <div class="partner-title">
-    Soo, how about we partner up?
-  </div>
-
-  <div class="partner-marquee">
-    <div class="marquee-track">
-      <img src="/screenOne.webp" />
-      <img src="/screen13.webp" />
-      <img src="/screen2.webp" />
-      <img src="/ipad1.webp" />
-      <img src="/screen3.webp" />
-      <img src="/screen4.webp" />
-      <img src="/screen5.webp" />
-      <img src="/ipad2.webp" />
-      <img src="/screen6.webp" />
-      <img src="/screen7.webp" />
-      <img src="/ipad3.webp" />
-      <img src="/screen8.webp" />
-      <img src="/screen9.webp" />
-      <img src="/screen10.webp" />
-      <img src="/screen11.webp" />
-      <img src="/ipad4.webp" />
-      <img src="/screen12.webp" />
-      <img src="/screenOne.webp" />
-      <img src="/screen13.webp" />
-      <img src="/screen2.webp" />
-      <img src="/ipad1.webp" />
-      <img src="/screen3.webp" />
-      <img src="/screen4.webp" />
-      <img src="/screen5.webp" />
-      <img src="/ipad2.webp" />
-      <img src="/screen6.webp" />
-      <img src="/screen7.webp" />
-      <img src="/ipad3.webp" />
-      <img src="/screen8.webp" />
-      <img src="/screen9.webp" />
-      <img src="/screen10.webp" />
-      <img src="/screen11.webp" />
-      <img src="/ipad4.webp" />
-      <img src="/screen12.webp" />
+  <section class="partner">
+    <div class="partner-title">
+      What our clients say
     </div>
-  </div>
-</section>
+
+    <div class="reviews-slider">
+      <button type="button" class="reviews-arrow left" (click)="prevReview()" aria-label="Previous review">
+        ←
+      </button>
+
+      <div class="reviews-viewport" (mouseenter)="pauseReviewsAutoplay()" (mouseleave)="resumeReviewsAutoplay()">
+        <div class="reviews-track" [style.transform]="'translateX(-' + currentReviewIndex * 100 + '%)'">
+          <div class="review-slide" *ngFor="let review of duplicatedReviews">
+            <div class="review-card">
+              <div class="review-top">
+                <div class="review-author">{{ review.name }}</div>
+                <div class="review-stars" [attr.aria-label]="review.stars + ' stars'">
+                  <span class="star" *ngFor="let filled of getStars(review.stars); let i = index"
+                    [class.filled]="filled">
+                    ★
+                  </span>
+                </div>
+              </div>
+
+              <p class="review-text">
+                {{ review.text }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="reviews-arrow right" (click)="nextReview()" aria-label="Next review">
+        →
+      </button>
+    </div>
+
+    <div class="reviews-dots">
+      <button type="button" class="reviews-dot" *ngFor="let review of reviews; let i = index"
+        [class.active]="getActiveDotIndex() === i" (click)="goToReview(i)"
+        [attr.aria-label]="'Go to review ' + (i + 1)"></button>
+    </div>
+  </section>
 
   <!-- FAQ -->
-<section class="faq">
-  <h1>FAQ</h1>
+  <section class="faq">
+    <h1>FAQ</h1>
 
-  <div class="faq-list">
-    <div
-      class="faq-item"
-      *ngFor="let item of faqItems; let i = index"
-      [class.open]="openFaqIndex === i"
-      (click)="toggleFaq(i)"
-    >
-      <div class="faq-question">
-        <span>{{ item.question }}</span>
-        <span class="arrow">▾</span>
-      </div>
+    <div class="faq-list">
+      <div class="faq-item" *ngFor="let item of faqItems; let i = index" [class.open]="openFaqIndex === i"
+        (click)="toggleFaq(i)">
+        <div class="faq-question">
+          <span>{{ item.question }}</span>
+          <span class="arrow">▾</span>
+        </div>
 
-      <div class="faq-answer">
-        <p>{{ item.answer }}</p>
+        <div class="faq-answer">
+          <p>{{ item.answer }}</p>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
 
- <section class="reservation" #contact>
-  <div class="reservation-inner">
-    <h1 class="reservation-title">Rezervacija</h1>
+  <section class="reservation" #contact>
+    <div class="reservation-inner">
+      <div class="reservation-head">
+  <div class="reservation-eyebrow">Greita registracija internetu</div>
+  <h1 class="reservation-title">Rezervuok laiką savo automobiliui</h1>
+  <p class="reservation-subtitle">
+    Pasirink paketą arba atskiras paslaugas, laiką ir pateik savo duomenis per kelis žingsnius.
+  </p>
+</div>
 
-    <div class="reservation-layout">
+      <!-- STEP 1: PACKAGES + SERVICES -->
+      <div class="reservation-layout" *ngIf="reservationStep === 1">
+        <!-- LEFT: PACKAGES -->
+        <div class="reservation-packages" [class.dimmed]="selectedServices.length > 0">
+          <div class="package-card selectable" *ngFor="let pkg of packages"
+            [class.selected]="selectedPackageId === pkg.id" (click)="selectPackage(pkg.id)">
+            <div class="package-bg">
+              <img *ngIf="pkg.imageURL" [src]="pkg.imageURL" alt="{{ pkg.title }}" />
+            </div>
 
-      <!-- LEFT: PACKAGES -->
-      <div
-        class="reservation-packages"
-        [class.dimmed]="selectedServices.length > 0"
-      >
-        <div
-          class="package-card selectable"
-          *ngFor="let pkg of packages"
-          [class.selected]="selectedPackageId === pkg.id"
-          (click)="selectPackage(pkg.id)"
-        >
-          <div class="package-content">
-            <div>
-              <div class="package-name">{{ pkg.name }}</div>
-              <div class="package-placeholder">
-                {{ pkg.description }}
-              </div>
+            <div class="package-fade"></div>
+
+            <button type="button" class="package-info-button" (click)="openPackageInfo(pkg, $event)"
+              aria-label="Package info">
+              i
+            </button>
+
+            <div class="package-content">
+              <div class="package-name">{{ pkg.title }}</div>
+              <div class="package-price">€{{ pkg.price }}</div>
             </div>
 
             <div class="package-check">
@@ -212,74 +313,382 @@ Platforms like Wolt or Bolt Food help you find customers — we help you keep th
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- RIGHT: SERVICES -->
-      <div
-        class="reservation-services"
-        [class.dimmed]="selectedPackageId !== null"
-      >
-        <div class="services-box">
-          <h2 class="services-title">Atskiros paslaugos</h2>
+        <!-- RIGHT: SERVICES -->
+        <div class="reservation-services" [class.dimmed]="selectedPackageId !== null">
+          <div class="services-box">
+            <h2 class="services-title">Atskiros paslaugos</h2>
 
-          <div
-            class="service-item selectable"
-            *ngFor="let service of services"
-            [class.selected]="isServiceSelected(service.id)"
-            (click)="selectService(service.id)"
-          >
-            <div class="service-left">
-              <div class="service-check">
-                <span *ngIf="isServiceSelected(service.id)">✓</span>
+            <div class="service-item selectable" *ngFor="let service of services"
+              [class.selected]="isServiceSelected(service.id)" (click)="selectService(service.id)">
+              <div class="service-left">
+                <div class="service-check">
+                  <span *ngIf="isServiceSelected(service.id)">✓</span>
+                </div>
+
+                <span class="service-name">{{ service.title }}</span>
               </div>
 
-              <span class="service-name">
-                {{ service.name }}
-              </span>
+              <span class="service-price">€{{ service.price }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reservation-duration" *ngIf="reservationStep === 1 && totalDurationMin > 0">
+        <div class="reservation-duration-label">
+          Užtruks apie:
+        </div>
+
+        <div class="reservation-duration-value">
+          {{ formattedDuration }}
+        </div>
+      </div>
+      <!-- STEP 1 ACTION -->
+      <div class="reservation-action" *ngIf="reservationStep === 1">
+        <button class="reservation-button" [disabled]="!selectedPackageId && selectedServices.length === 0"
+          (click)="openCalendar()">
+          <span>Pasirinkti laiką</span>
+          <span class="arrow">→</span>
+        </button>
+      </div>
+
+      <!-- STEP 2: CALENDAR -->
+      <div class="booking-calendar booking-calendar-full" *ngIf="reservationStep === 2">
+        <div class="booking-calendar-topbar">
+          <button type="button" class="calendar-back-button" (click)="backToSelection()">
+            ← Atgal
+          </button>
+        </div>
+
+        <div class="booking-calendar-header">
+          <button type="button" class="month-nav" (click)="previousMonth()">←</button>
+          <div class="booking-calendar-title">{{ currentMonthLabel }}</div>
+          <button type="button" class="month-nav" (click)="nextMonth()">→</button>
+        </div>
+
+        <div class="booking-calendar-grid">
+          <div class="weekday" *ngFor="let day of weekdayLabels">{{ day }}</div>
+
+          <button type="button" class="calendar-day" *ngFor="let day of calendarDays"
+            [class.outside]="!isCurrentMonth(day)" [class.available]="canSelectDay(day)"
+            [class.selected]="isSelectedDay(day)" [disabled]="!canSelectDay(day)" (click)="selectDate(day)">
+            {{ day.getDate() }}
+          </button>
+        </div>
+
+        <div class="booking-slots" *ngIf="selectedDate">
+          <div class="booking-slots-title">
+            Laikai {{ selectedDate | date:'yyyy-MM-dd' }}
+          </div>
+
+          <div class="booking-slot-grid" *ngIf="timeSlots.length > 0; else noSlots">
+            <button type="button" class="booking-slot" *ngFor="let slot of timeSlots"
+              [class.selected]="selectedTime === slot" (click)="selectTime(slot)">
+              {{ slot }}
+            </button>
+          </div>
+
+          <ng-template #noSlots>
+            <div class="booking-no-slots">Tą dieną laisvų laikų nėra</div>
+          </ng-template>
+        </div>
+      </div>
+      <div class="reservation-action" *ngIf="reservationStep === 2 && selectedTime">
+        <button class="reservation-button" (click)="goToDetailsStep()">
+          <span>Toliau</span>
+          <span class="arrow">→</span>
+        </button>
+      </div>
+      <div class="reservation-details" *ngIf="reservationStep === 3">
+        <div class="booking-calendar-topbar">
+          <button type="button" class="calendar-back-button" (click)="backToCalendar()">
+            ← Atgal
+          </button>
+        </div>
+
+        <div class="reservation-details-layout">
+          <!-- LEFT: FORM -->
+          <div class="reservation-details-form">
+            <h2 class="details-title">Jūsų duomenys</h2>
+
+            <div class="details-grid">
+              <div class="details-field">
+                <label for="firstName">Vardas *</label>
+                <input id="firstName" type="text" [(ngModel)]="customerFirstName" />
+              </div>
+
+              <div class="details-field">
+                <label for="lastName">Pavardė *</label>
+                <input id="lastName" type="text" [(ngModel)]="customerLastName" />
+              </div>
             </div>
 
-            <span class="service-price">
-              {{ service.price }}
-            </span>
+            <div class="details-field">
+              <label for="phone">Telefono numeris *</label>
+
+              <div class="phone-row">
+                <select [(ngModel)]="customerCountryCode">
+                  <option *ngFor="let code of countryCodes" [value]="code">
+                    {{ code }}
+                  </option>
+                </select>
+
+                <input id="phone" type="tel" [(ngModel)]="customerPhone" />
+              </div>
+            </div>
+
+            <div class="details-field">
+              <label for="email">El. paštas *</label>
+              <input id="email" type="email" [(ngModel)]="customerEmail" />
+            </div>
+
+            <div class="details-field">
+              <label for="address">Adresas *</label>
+              <select id="address" [(ngModel)]="selectedAddress">
+                <option *ngFor="let address of addressOptions" [value]="address">
+                  {{ address }}
+                </option>
+              </select>
+            </div>
+
+            <div class="details-field">
+              <label for="discount">Nuolaidos kodas</label>
+              <input id="discount" type="text" [(ngModel)]="discountCode" />
+            </div>
+
+            <div class="details-field">
+              <label for="payment">Apmokėjimas *</label>
+              <select id="payment" [(ngModel)]="paymentMethod">
+                <option value="moketi_atvykus">Mokėti atvykus</option>
+              </select>
+            </div>
+
+            <label class="details-checkbox">
+              <input type="checkbox" [(ngModel)]="allowPromoFilming" />
+              <span>
+                Sutinku, kad mano automobilis galimai būtų filmuojamas reklamos tikslais be valstybinių numerių
+              </span>
+            </label>
+          </div>
+
+          <!-- RIGHT: SUMMARY -->
+          <div class="reservation-summary">
+            <h2 class="details-title">Rezervacijos suvestinė</h2>
+
+            <div class="summary-block">
+              <div class="summary-label">Paslaugos</div>
+
+              <div class="summary-value" *ngIf="selectedPackage">
+                {{ selectedPackage.title }}
+              </div>
+
+              <div class="summary-services" *ngIf="!selectedPackage && selectedServiceItems.length > 0">
+                <div class="summary-service-item" *ngFor="let service of selectedServiceItems">
+                  {{ service.title }}
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-row">
+              <span>Data</span>
+              <strong>{{ formattedSelectedDate }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Laikas</span>
+              <strong>{{ selectedTime }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Trukmė</span>
+              <strong>{{ formattedDuration }}</strong>
+            </div>
+            <div class="summary-row">
+              <span>Adresas</span>
+              <strong>{{ selectedAddress }}</strong>
+            </div>
+            <div class="summary-row">
+              <span>Apmokėjimas</span>
+              <strong>Mokėti atvykus</strong>
+            </div>
+
+            <div class="summary-total">
+              <span>Suma</span>
+              <strong>€{{ totalPrice }}</strong>
+            </div>
+            <div class="summary-row">
+              <span>Filmavimas</span>
+              <strong>{{ allowPromoFilming ? 'Leidžiama' : 'Neleidžiama' }}</strong>
+            </div>
+            <div class="reservation-action summary-action">
+              <button class="reservation-button" [disabled]="!isDetailsStepValid || isSubmittingReservation"
+                (click)="submitReservation()">
+                <span>
+                  {{ isSubmittingReservation ? 'Saugoma...' : 'Patvirtinti rezervaciją' }}
+                </span>
+                <span class="arrow" *ngIf="!isSubmittingReservation">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reservation-success" *ngIf="reservationStep === 4 && submittedReservationSummary">
+        <div class="reservation-success-card">
+          <div class="success-checkmark-wrapper">
+            <svg class="success-checkmark" viewBox="0 0 52 52">
+              <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none" />
+              <path class="checkmark-check" fill="none" d="M14 27l7 7 16-16" />
+            </svg>
+          </div>
+
+          <h2 class="reservation-success-title">Rezervacija patvirtinta</h2>
+
+          <p class="reservation-success-subtitle">
+            Jūsų rezervacija sėkmingai išsaugota.
+          </p>
+
+          <div class="success-summary">
+            <div class="summary-row">
+              <span>Užsakymo numeris</span>
+              <strong>{{ submittedReservationSummary.orderNumber }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Vardas</span>
+              <strong>{{ submittedReservationSummary.firstName }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Pavardė</span>
+              <strong>{{ submittedReservationSummary.lastName }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Telefonas</span>
+              <strong>{{ submittedReservationSummary.phone }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>El. paštas</span>
+              <strong>{{ submittedReservationSummary.email }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Adresas</span>
+              <strong>{{ submittedReservationSummary.address }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Data</span>
+              <strong>{{ submittedReservationSummary.dateLabel }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Laikas</span>
+              <strong>{{ submittedReservationSummary.time }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Trukmė</span>
+              <strong>{{ submittedReservationSummary.duration }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Apmokėjimas</span>
+              <strong>Mokėti atvykus</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Filmavimas</span>
+              <strong>
+                {{ submittedReservationSummary.allowPromoFilming ? 'Leidžiama' : 'Neleidžiama' }}
+              </strong>
+            </div>
+
+            <div class="summary-row" *ngIf="submittedReservationSummary.discountCode">
+              <span>Nuolaidos kodas</span>
+              <strong>{{ submittedReservationSummary.discountCode }}</strong>
+            </div>
+
+            <div class="summary-block" *ngIf="submittedReservationSummary.packageTitle">
+              <div class="summary-label">Pasirinktas paketas</div>
+              <div class="summary-value">{{ submittedReservationSummary.packageTitle }}</div>
+            </div>
+
+            <div class="summary-block"
+              *ngIf="!submittedReservationSummary.packageTitle && submittedReservationSummary.services?.length">
+              <div class="summary-label">Paslaugos</div>
+
+              <div class="summary-row" *ngFor="let service of submittedReservationSummary.services">
+                <span>{{ service.title }}</span>
+                <strong>€{{ service.price }}</strong>
+              </div>
+            </div>
+
+            <div class="summary-total">
+              <span>Suma</span>
+              <strong>€{{ submittedReservationSummary.totalPrice }}</strong>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
-    <div class="reservation-action">
-  <button
-    class="reservation-button"
-    [disabled]="!selectedPackageId && selectedServices.length === 0"
-  >
-    <span>Pasirinkti laiką</span>
-    <span class="arrow">→</span>
-  </button>
-</div>
-  </div>
-  
-</section>
 
-<footer class="footer">
-  <div class="footer-inner">
+  </section>
 
-    <div class="footer-col logo-col">
-      <div class="footer-logo">
-        AppSolution<span>.lt</span>
+  <div class="package-modal-backdrop" *ngIf="openedPackage" (click)="closePackageInfo()">
+    <div class="package-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="package-modal-close" (click)="closePackageInfo()" aria-label="Close">
+        ×
+      </button>
+
+      <h2 class="package-modal-title">{{ openedPackage.title }}</h2>
+
+      <p class="package-modal-description">
+        {{ openedPackage.description }}
+      </p>
+
+      <div class="package-modal-meta">
+        <div><strong>Kaina:</strong> €{{ openedPackage.price }}</div>
+        <div>
+          <strong>Trukmė:</strong>
+          {{ openedPackage.durationMin || openedPackage.duration }} min
+        </div>
       </div>
 
-      <div class="footer-contact">
-        <div>+370 663 07474</div>
-        <div>artiom&#64;appsolution.lt</div>
+      <div class="package-modal-services" *ngIf="openedPackage.services?.length">
+        <h3>Į paketą įeina:</h3>
 
+        <div class="package-modal-service-item" *ngFor="let item of openedPackage.services">
+          {{ item }}
+        </div>
       </div>
     </div>
-
   </div>
 
-  <div class="footer-bottom">
-    © 2025 MB Appsolution. All rights reserved.
-  </div>
-</footer>
+  <footer class="footer">
+    <div class="footer-inner">
+
+      <div class="footer-col logo-col">
+        <div class="footer-logo">
+          MVMasters<span>.lt</span>
+        </div>
+
+        <div class="footer-contact">
+          <div>+370 609 18900</div>
+          <div>info&#64;mvmasters.lt</div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      © 2025 MB Appsolution. All rights reserved.
+    </div>
+  </footer>
 
 
 

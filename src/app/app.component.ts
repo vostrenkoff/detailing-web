@@ -7,22 +7,902 @@ import {
   ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {
+  OnDestroy,
+  OnInit
+} from '@angular/core';
+import { AvailabilityService, AvailabilityItem } from './services/availability.service';
+import { inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Firestore, collection, addDoc, doc, writeBatch, serverTimestamp } from '@angular/fire/firestore';
+import { BusySlotsService, BusySlot } from './services/busy-slots.service';
+import { take } from 'rxjs/operators';
+import {
+  ReservationDataService,
+  BundleItem,
+  ServiceItem
+} from './services/reservation-data.service';
+interface ReviewItem {
+  name: string;
+  stars: number;
+  text: string;
+}
+interface WebsiteServiceItem {
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+  price: string;
+  includes?: string[];
+}
 
+interface SelectedWebsiteServiceInfo {
+  type: 'package' | 'single';
+  index: number;
+}
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule], // 🔥 ВОТ ЭТО ГЛАВНОЕ
+  imports: [CommonModule, FormsModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements AfterViewInit {
+
+
+export class AppComponent implements AfterViewInit, OnInit, OnDestroy {
 
 @ViewChild('contact') contactSection!: ElementRef;
 
+websitePackages: WebsiteServiceItem[] = [
+  {
+    title: 'Mini paketas',
+    shortDescription: 'Greitas ir tvarkingas automobilio atnaujinimas kasdienai.',
+    fullDescription:
+      'Puikus pasirinkimas tiems, kas nori greitai atgaivinti automobilio išvaizdą be pilno detailing proceso. Tinka reguliariai priežiūrai ir kasdien naudojamiems automobiliams.',
+    price: 'nuo 69 €',
+    includes: ['Išorės plovimas', 'Salono siurbimas', 'Langų valymas', 'Paviršių nuvalymas']
+  },
+  {
+    title: 'Standartinis paketas',
+    shortDescription: 'Populiariausias variantas kruopščiam salono ir išorės sutvarkymui.',
+    fullDescription:
+      'Subalansuotas paketas klientams, kurie nori ne tik švaros, bet ir ryškesnio vizualinio rezultato. Idealiai tinka sezoniniam atnaujinimui arba prieš pardavimą.',
+    price: 'nuo 129 €',
+    includes: ['Gilus išorės plovimas', 'Salono valymas', 'Plastikų atgaivinimas', 'Langai', 'Padangų juodinimas']
+  },
+  {
+    title: 'Premium paketas',
+    shortDescription: 'Maksimalus efektas tiems, kas nori geriausio rezultato.',
+    fullDescription:
+      'Pilnas detailing paketas reikliems klientams. Daugiau dėmesio detalėms, daugiau kruopštumo, daugiau vizualinio efekto. Tinka tiems, kas nori, kad automobilis atrodytų kuo geriau.',
+    price: 'nuo 249 €',
+    includes: ['Pilnas salono detailingas', 'Daugiaetapis išorės valymas', 'Dažų paruošimas', 'Apsauginės priemonės', 'Maksimalus užbaigimas']
+  }
+];
+
+websiteSingleServices: WebsiteServiceItem[] = [
+  {
+    title: 'Išorės plovimas',
+    shortDescription: 'Saugus rankinis automobilio išorės plovimas.',
+    fullDescription:
+      'Kruopštus rankinis plovimas naudojant profesionalias priemones, skirtas saugiai pašalinti nešvarumus nuo kėbulo, ratlankių ir kitų išorės paviršių.',
+    price: 'nuo 25 €',
+    includes: ['Kėbulas', 'Ratų valymas', 'Saugios priemonės']
+  },
+  {
+    title: 'Salono valymas',
+    shortDescription: 'Kasdienis salono atnaujinimas ir švaros sugrąžinimas.',
+    fullDescription:
+      'Išvalomos pagrindinės salono zonos: grindys, kilimėliai, sėdynės, panelė ir kiti paviršiai. Puikus pasirinkimas norint palaikyti švarų ir malonų saloną.',
+    price: 'nuo 35 €',
+    includes: ['Siurbimas', 'Paviršių valymas', 'Kilimėliai']
+  },
+  {
+    title: 'Giluminis salono valymas',
+    shortDescription: 'Gilesnis salono valymas stipresniems nešvarumams.',
+    fullDescription:
+      'Skirta automobiliams, kurių salonas reikalauja daugiau dėmesio. Valomos sunkiau pasiekiamos vietos, pašalinami įsisenėję nešvarumai ir atgaivinama bendra salono išvaizda.',
+    price: 'nuo 89 €',
+    includes: ['Gilesnis valymas', 'Dėmės', 'Daugiau dėmesio detalėms']
+  },
+  {
+    title: 'Sėdynių cheminis valymas',
+    shortDescription: 'Audinių ar tekstilinių sėdynių valymas cheminiu būdu.',
+    fullDescription:
+      'Efektyvus būdas pašalinti dėmes, kvapus ir giliai įsigėrusius nešvarumus iš tekstilinių sėdynių, grąžinant joms gaivesnę ir tvarkingesnę būklę.',
+    price: 'nuo 49 €',
+    includes: ['Dėmių mažinimas', 'Kvapo gaivinimas', 'Tekstilės priežiūra']
+  },
+  {
+    title: 'Odos valymas ir impregnavimas',
+    shortDescription: 'Odinio salono priežiūra ir apsauga.',
+    fullDescription:
+      'Oda išvaloma specialiomis priemonėmis, po to padengiama apsauginiu sluoksniu, kuris padeda ilgiau išlaikyti minkštumą, švarą ir estetinę išvaizdą.',
+    price: 'nuo 59 €',
+    includes: ['Odos valymas', 'Maitinimas', 'Apsauga']
+  },
+  {
+    title: 'Variklio skyriaus valymas',
+    shortDescription: 'Tvarkingas ir saugus variklio skyriaus sutvarkymas.',
+    fullDescription:
+      'Atsargus variklio skyriaus valymas naudojant tam pritaikytas priemones. Tikslas yra pašalinti dulkes, purvą ir suteikti tvarkingesnę bendrą išvaizdą.',
+    price: 'nuo 39 €',
+    includes: ['Saugus valymas', 'Plastikų atgaivinimas', 'Tvarkingas vaizdas']
+  },
+  {
+    title: 'Vieno etapo poliravimas',
+    shortDescription: 'Blizgesio atnaujinimas ir smulkių defektų sumažinimas.',
+    fullDescription:
+      'Lengvas dažų paviršiaus atnaujinimas, skirtas pagerinti blizgesį ir sumažinti smulkių įbrėžimų bei hologramų matomumą.',
+    price: 'nuo 149 €',
+    includes: ['Blizgesio atkūrimas', 'Smulkūs defektai', 'Vizualinis efektas']
+  },
+  {
+    title: 'Dviejų etapų poliravimas',
+    shortDescription: 'Gilesnis dažų koregavimas geresniam rezultatui.',
+    fullDescription:
+      'Išsamesnis poliravimo procesas, leidžiantis efektyviau sumažinti matomus defektus ir išgauti ryškesnį, gilesnį automobilio blizgesį.',
+    price: 'nuo 249 €',
+    includes: ['Dažų korekcija', 'Ryškesnis blizgesys', 'Didesnis efektas']
+  },
+  {
+    title: 'Keraminė danga',
+    shortDescription: 'Dažų paviršiaus apsauga ir lengvesnė priežiūra.',
+    fullDescription:
+      'Keraminė danga padeda apsaugoti automobilio paviršių nuo aplinkos poveikio, palengvina priežiūrą ir suteikia išraiškingesnį blizgesį.',
+    price: 'nuo 299 €',
+    includes: ['Paviršiaus apsauga', 'Lengvesnė priežiūra', 'Hidrofobinis efektas']
+  },
+  {
+    title: 'Žibintų poliravimas',
+    shortDescription: 'Pagerina žibintų išvaizdą ir skaidrumą.',
+    fullDescription:
+      'Pašalinamas apsiblausimas ir paviršiaus oksidacija, kad žibintai atrodytų tvarkingiau ir šviesa sklistų švariau.',
+    price: 'nuo 39 €',
+    includes: ['Skaidrumas', 'Tvarkingesnė išvaizda', 'Atnaujinimas']
+  },
+  {
+    title: 'Apsauginis vaškas',
+    shortDescription: 'Greita išorės apsauga ir papildomas blizgesys.',
+    fullDescription:
+      'Apsauginio vaško sluoksnis suteikia malonų vizualinį efektą, padeda lengviau palaikyti švarą ir papildo automobilio priežiūros procesą.',
+    price: 'nuo 29 €',
+    includes: ['Blizgesys', 'Trumpalaikė apsauga', 'Lengvesnė priežiūra']
+  },
+  {
+    title: 'Kvapo šalinimas',
+    shortDescription: 'Nemalonių kvapų sumažinimas salone.',
+    fullDescription:
+      'Naudojamos specialios priemonės, padedančios sumažinti ar pašalinti nemalonius kvapus salone ir suteikti gaivesnį pojūtį.',
+    price: 'nuo 25 €',
+    includes: ['Salono gaivinimas', 'Kvapų mažinimas', 'Švaresnis pojūtis']
+  }
+];
+
+selectedServiceInfo: SelectedWebsiteServiceInfo | null = null;
+
+toggleWebsiteServiceInfo(type: 'package' | 'single', index: number, event?: Event): void {
+  event?.stopPropagation();
+
+  if (
+    this.selectedServiceInfo &&
+    this.selectedServiceInfo.type === type &&
+    this.selectedServiceInfo.index === index
+  ) {
+    this.selectedServiceInfo = null;
+    return;
+  }
+
+  this.selectedServiceInfo = { type, index };
+}
+
+closeWebsiteServiceInfo(): void {
+  this.selectedServiceInfo = null;
+}
+  reviews: ReviewItem[] = [
+    {
+      name: 'Sophia',
+      stars: 5,
+      text: 'The whole process was smooth and professional. The app feels premium and works exactly how we wanted.'
+    },
+    {
+      name: 'Daniel',
+      stars: 5,
+      text: 'Very responsive team, beautiful design, and everything feels fast and polished. Our clients noticed the difference immediately.'
+    },
+    {
+      name: 'Emma',
+      stars: 4,
+      text: 'Clean user experience, easy ordering flow, and great support during setup. It really helped our business look more modern.'
+    },
+    {
+      name: 'Lucas',
+      stars: 5,
+      text: 'We wanted something better than the usual template-based solutions, and this delivered exactly that.'
+    }
+  ];
+
+  duplicatedReviews: ReviewItem[] = [];
+  currentReviewIndex = 1;
+
+  private reviewsAutoplayInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly reviewAutoplayDelay = 4500;
+  private isReviewAnimating = false;
+
+  ngOnInit(): void {
+    this.setupReviewsSlider();
+    this.startReviewsAutoplay();
+  }
+
+  ngOnDestroy(): void {
+    this.stopReviewsAutoplay();
+  }
+
+  private setupReviewsSlider(): void {
+    if (!this.reviews.length) {
+      this.duplicatedReviews = [];
+      this.currentReviewIndex = 0;
+      return;
+    }
+
+    const first = this.reviews[0];
+    const last = this.reviews[this.reviews.length - 1];
+
+    this.duplicatedReviews = [last, ...this.reviews, first];
+    this.currentReviewIndex = 1;
+  }
+
+  nextReview(): void {
+    if (this.isReviewAnimating || this.reviews.length <= 1) return;
+
+    this.isReviewAnimating = true;
+    this.currentReviewIndex++;
+
+    setTimeout(() => {
+      if (this.currentReviewIndex === this.duplicatedReviews.length - 1) {
+        this.currentReviewIndex = 1;
+      }
+      this.isReviewAnimating = false;
+    }, 500);
+  }
+
+  prevReview(): void {
+    if (this.isReviewAnimating || this.reviews.length <= 1) return;
+
+    this.isReviewAnimating = true;
+    this.currentReviewIndex--;
+
+    setTimeout(() => {
+      if (this.currentReviewIndex === 0) {
+        this.currentReviewIndex = this.reviews.length;
+      }
+      this.isReviewAnimating = false;
+    }, 500);
+  }
+
+  goToReview(index: number): void {
+    if (this.isReviewAnimating || this.reviews.length <= 1) return;
+
+    this.currentReviewIndex = index + 1;
+  }
+
+  getActiveDotIndex(): number {
+    if (!this.reviews.length) return 0;
+
+    if (this.currentReviewIndex === 0) {
+      return this.reviews.length - 1;
+    }
+
+    if (this.currentReviewIndex === this.duplicatedReviews.length - 1) {
+      return 0;
+    }
+
+    return this.currentReviewIndex - 1;
+  }
+
+  getStars(count: number): boolean[] {
+    return Array.from({ length: 5 }, (_, i) => i < count);
+  }
+
+  pauseReviewsAutoplay(): void {
+    this.stopReviewsAutoplay();
+  }
+
+  resumeReviewsAutoplay(): void {
+    this.startReviewsAutoplay();
+  }
+
+  private startReviewsAutoplay(): void {
+    this.stopReviewsAutoplay();
+
+    if (this.reviews.length <= 1) return;
+
+    this.reviewsAutoplayInterval = setInterval(() => {
+      this.nextReview();
+    }, this.reviewAutoplayDelay);
+  }
+
+  private stopReviewsAutoplay(): void {
+    if (this.reviewsAutoplayInterval) {
+      clearInterval(this.reviewsAutoplayInterval);
+      this.reviewsAutoplayInterval = null;
+    }
+  }
+  openedPackage: BundleItem | null = null;
+
+  openPackageInfo(pkg: BundleItem, event: Event) {
+    event.stopPropagation();
+    this.openedPackage = pkg;
+  }
+  private availabilityService = inject(AvailabilityService);
+  private busySlotsService = inject(BusySlotsService);
+  busySlots: BusySlot[] = [];
+  selectedDateKey: string | null = null;
+
+
+
+  formatDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  timeStringToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  minutesToTimeString(totalMinutes: number): string {
+    const hours = Math.floor(totalMinutes / 60)
+      .toString()
+      .padStart(2, '0');
+    const minutes = (totalMinutes % 60)
+      .toString()
+      .padStart(2, '0');
+
+    return `${hours}:${minutes}`;
+  }
+
+  isTimeRangeOverlapping(
+    startA: number,
+    endA: number,
+    startB: number,
+    endB: number
+  ): boolean {
+    return startA < endB && endA > startB;
+  }
+
+  private firestore = inject(Firestore);
+  isSubmittingReservation = false;
+  reservationSubmitted = false;
+  createdReservationId: string | null = null;
+  submittedReservationSummary: any = null;
+  reservationStep = 1; // 1 = services/packages, 2 = calendar, 3 = details
+
+  customerFirstName = '';
+  customerLastName = '';
+  customerCountryCode = '+370';
+  customerPhone = '';
+  customerEmail = '';
+  discountCode = '';
+  paymentMethod = 'moketi_atvykus';
+  selectedAddress = 'Pavilnės g. 5a, Vilnius';
+  addressOptions: string[] = ['Pavilnės g. 5a, Vilnius'];
+
+  allowPromoFilming = false;
+  countryCodes: string[] = ['+370', '+371', '+372', '+48', '+49', '+31', '+44'];
+
+
+  generateOrderNumber(): string {
+    const now = new Date();
+
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+
+    const randomPart = Math.floor(100 + Math.random() * 900); // 100–999
+
+    return `${datePart}-${randomPart}`;
+  }
+  get isDetailsStepValid(): boolean {
+    return !!(
+      this.customerFirstName.trim() &&
+      this.customerLastName.trim() &&
+      this.customerCountryCode.trim() &&
+      this.customerPhone.trim() &&
+      this.customerEmail.trim() &&
+      this.selectedAddress.trim() &&
+      this.paymentMethod.trim() &&
+      this.selectedDate &&
+      this.selectedTime
+    );
+  }
+
+ async submitReservation() {
+  if (!this.isDetailsStepValid || this.isSubmittingReservation) return;
+
+  this.isSubmittingReservation = true;
+
+  try {
+    const orderNumber = this.generateOrderNumber();
+
+    const dateKey = this.selectedDate ? this.formatDateKey(this.selectedDate) : null;
+    const startMinutes = this.getSelectedStartMinutes();
+    const endMinutes = this.getSelectedEndMinutes();
+
+    if (!dateKey || startMinutes === null || endMinutes === null) {
+      alert('Neteisingi rezervacijos duomenys.');
+      return;
+    }
+
+    const sameDayBusySlots = await new Promise<BusySlot[]>((resolve) => {
+      this.busySlotsService
+        .getBusySlotsByDate(dateKey)
+        .pipe(take(1))
+        .subscribe(data => resolve(data));
+    });
+
+    const hasConflict = sameDayBusySlots.some(slot => {
+      if (slot.status === 'cancelled' || slot.status === 'canceled') {
+        return false;
+      }
+
+      return this.isTimeRangeOverlapping(
+        startMinutes,
+        endMinutes,
+        slot.startMinutes,
+        slot.endMinutes
+      );
+    });
+
+    if (hasConflict) {
+      alert('Pasirinktas laikas jau užimtas. Prašome pasirinkti kitą laiką.');
+
+      if (this.selectedDate) {
+        this.selectDate(this.selectedDate);
+      }
+
+      return;
+    }
+
+    const reservationPayload = {
+      orderNumber,
+      status: 'new',
+      createdAt: serverTimestamp(),
+
+      customer: {
+        firstName: this.customerFirstName.trim(),
+        lastName: this.customerLastName.trim(),
+        phone: this.fullPhoneNumber,
+        email: this.customerEmail.trim()
+      },
+
+      address: this.selectedAddress,
+      discountCode: this.discountCode.trim() || null,
+      paymentMethod: this.paymentMethod,
+      allowPromoFilming: this.allowPromoFilming,
+
+      booking: {
+        date: this.selectedDate ? this.selectedDate.toISOString() : null,
+        dateKey,
+        dateLabel: this.formattedSelectedDate,
+        time: this.selectedTime,
+        startMinutes,
+        endMinutes,
+        durationMin: this.totalDurationMin
+      },
+
+      selection: {
+        packageId: this.selectedPackage?.id || null,
+        packageTitle: this.selectedPackage?.title || null,
+        services: this.selectedServiceItems.map(service => ({
+          id: service.id,
+          title: service.title,
+          price: service.price,
+          durationMin: service.durationMin
+        }))
+      },
+
+      totals: {
+        amount: this.totalPrice,
+        currency: 'EUR'
+      }
+    };
+
+    const batch = writeBatch(this.firestore);
+
+    const reservationRef = doc(collection(this.firestore, 'reservations'));
+    const busySlotRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+
+    batch.set(reservationRef, reservationPayload);
+
+    batch.set(busySlotRef, {
+      startMinutes,
+      endMinutes,
+      time: this.selectedTime,
+      durationMin: this.totalDurationMin,
+      reservationId: reservationRef.id,
+      status: 'active',
+      createdAt: serverTimestamp()
+    });
+
+    await batch.commit();
+
+    this.createdReservationId = reservationRef.id;
+    this.reservationSubmitted = true;
+    this.reservationStep = 4;
+
+    this.submittedReservationSummary = {
+      id: reservationRef.id,
+      orderNumber,
+      firstName: this.customerFirstName.trim(),
+      lastName: this.customerLastName.trim(),
+      phone: this.fullPhoneNumber,
+      email: this.customerEmail.trim(),
+      address: this.selectedAddress,
+      discountCode: this.discountCode.trim(),
+      paymentMethod: this.paymentMethod,
+      allowPromoFilming: this.allowPromoFilming,
+      dateLabel: this.formattedSelectedDate,
+      time: this.selectedTime,
+      duration: this.formattedDuration,
+      totalPrice: this.totalPrice,
+      packageTitle: this.selectedPackage?.title || null,
+      services: this.selectedServiceItems.map(service => ({
+        title: service.title,
+        price: service.price
+      }))
+    };
+  } catch (error) {
+    console.error('Failed to submit reservation:', error);
+    alert('Nepavyko išsaugoti rezervacijos. Bandykite dar kartą.');
+  } finally {
+    this.isSubmittingReservation = false;
+  }
+}
+  resetReservationFlow() {
+    this.selectedPackageId = null;
+    this.selectedServices = [];
+    this.calendarOpen = false;
+    this.selectedDate = null;
+    this.selectedTime = null;
+    this.timeSlots = [];
+
+    this.customerFirstName = '';
+    this.customerLastName = '';
+    this.customerCountryCode = '+370';
+    this.customerPhone = '';
+    this.customerEmail = '';
+    this.discountCode = '';
+    this.paymentMethod = 'moketi_atvykus';
+    this.selectedAddress = 'Pavilnės g. 5a, Vilnius';
+    this.allowPromoFilming = false;
+
+    this.reservationSubmitted = false;
+    this.createdReservationId = null;
+    this.submittedReservationSummary = null;
+    this.reservationStep = 1;
+  }
+  get fullPhoneNumber(): string {
+    return `${this.customerCountryCode} ${this.customerPhone}`.trim();
+  }
+  goToCalendar() {
+    if (!this.selectedPackageId && this.selectedServices.length === 0) return;
+
+    this.calendarOpen = true;
+    this.reservationStep = 2;
+    this.generateCalendarDays();
+  }
+
+  goToDetailsStep() {
+    if (!this.selectedDate || !this.selectedTime) return;
+
+    this.reservationStep = 3;
+  }
+
+  backToSelection() {
+    this.reservationStep = 1;
+    this.calendarOpen = false;
+  }
+
+  backToCalendar() {
+    this.reservationStep = 2;
+    this.calendarOpen = true;
+  }
+  openCalendar() {
+  if (!this.selectedPackageId && this.selectedServices.length === 0) return;
+
+  this.selectedDate = null;
+  this.selectedTime = null;
+  this.timeSlots = [];
+  this.selectedDateKey = null;
+
+  this.calendarOpen = true;
+  this.reservationStep = 2;
+  this.generateCalendarDays();
+}
+  get selectedPackage(): BundleItem | null {
+    if (!this.selectedPackageId) return null;
+    return this.packages.find(p => p.id === this.selectedPackageId) || null;
+  }
+
+  get selectedServiceItems(): ServiceItem[] {
+    return this.services.filter(service => this.selectedServices.includes(service.id));
+  }
+
+  get totalPrice(): number {
+    if (this.selectedPackage) {
+      return this.selectedPackage.price || 0;
+    }
+
+    return this.selectedServiceItems.reduce((sum, service) => sum + (service.price || 0), 0);
+  }
+
+  get formattedSelectedDate(): string {
+    if (!this.selectedDate) return '';
+    return this.selectedDate.toLocaleDateString('lt-LT', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+  closeCalendar() {
+    this.calendarOpen = false;
+    this.reservationStep = 1;
+    this.selectedDate = null;
+    this.selectedTime = null;
+    this.timeSlots = [];
+  }
+  private resetCalendarSelection(): void {
+  this.selectedDate = null;
+  this.selectedTime = null;
+  this.timeSlots = [];
+  this.selectedDateKey = null;
+}
+  isBeforeTomorrow(day: Date): boolean {
+    const candidate = new Date(day);
+    candidate.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return candidate < tomorrow;
+  }
+
+  canSelectDay(day: Date): boolean {
+    return this.hasAvailability(day) && !this.isBeforeTomorrow(day);
+  }
+  generateCalendarDays() {
+    const year = this.currentMonth.getFullYear();
+    const month = this.currentMonth.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const startWeekday = (firstDayOfMonth.getDay() + 6) % 7; // Monday first
+    const gridStart = new Date(year, month, 1 - startWeekday);
+
+    this.calendarDays = [];
+
+    for (let i = 0; i < 42; i++) {
+      const day = new Date(gridStart);
+      day.setDate(gridStart.getDate() + i);
+      this.calendarDays.push(day);
+    }
+  }
+  goToNextStep() {
+    console.log('Selected date:', this.selectedDate);
+    console.log('Selected time:', this.selectedTime);
+  }
+  previousMonth() {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
+    this.selectedDate = null;
+    this.selectedTime = null;
+    this.timeSlots = [];
+    this.generateCalendarDays();
+  }
+
+  nextMonth() {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
+    this.selectedDate = null;
+    this.selectedTime = null;
+    this.timeSlots = [];
+    this.generateCalendarDays();
+  }
+
+  isSameDay(a: Date, b: Date): boolean {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  hasAvailability(day: Date): boolean {
+    return this.availabilityItems.some(item => {
+      const itemDate = this.toDate(item.date);
+      return this.isSameDay(itemDate, day);
+    });
+  }
+
+  isCurrentMonth(day: Date): boolean {
+    return day.getMonth() === this.currentMonth.getMonth();
+  }
+
+  isSelectedDay(day: Date): boolean {
+    return this.selectedDate ? this.isSameDay(this.selectedDate, day) : false;
+  }
+
+  selectDate(day: Date) {
+    if (!this.canSelectDay(day)) return;
+
+    this.selectedDate = day;
+    this.selectedTime = null;
+
+    const dateKey = this.formatDateKey(day);
+    this.selectedDateKey = dateKey;
+
+    this.busySlotsService
+      .getBusySlotsByDate(dateKey)
+      .pipe(take(1))
+      .subscribe(data => {
+        this.busySlots = data.filter(
+          slot => slot.status !== 'cancelled' && slot.status !== 'canceled'
+        );
+
+        this.generateTimeSlotsForDay(day);
+      });
+  }
+
+  generateTimeSlotsForDay(day: Date) {
+    const availability = this.availabilityItems.find(item => {
+      const itemDate = this.toDate(item.date);
+      return this.isSameDay(itemDate, day);
+    });
+
+    if (!availability) {
+      this.timeSlots = [];
+      return;
+    }
+
+    const start = this.toDate(availability.start);
+    const end = this.toDate(availability.end);
+    const durationMin = this.totalDurationMin;
+
+    this.timeSlots = this.generateSlots(start, end, durationMin);
+  }
+  getSelectedStartMinutes(): number | null {
+    if (!this.selectedTime) return null;
+    return this.timeStringToMinutes(this.selectedTime);
+  }
+
+  getSelectedEndMinutes(): number | null {
+    const start = this.getSelectedStartMinutes();
+    if (start === null) return null;
+    return start + this.totalDurationMin;
+  }
+  generateSlots(start: Date, end: Date, durationMin: number): string[] {
+    const slots: string[] = [];
+    const stepMin = 30;
+
+    let current = this.roundUpToNextHalfHour(start);
+
+    while (true) {
+      const slotEnd = new Date(current.getTime() + durationMin * 60000);
+
+      if (slotEnd > end) break;
+
+      const slotStartMinutes = current.getHours() * 60 + current.getMinutes();
+      const slotEndMinutes = slotStartMinutes + durationMin;
+
+      const hasConflict = this.busySlots.some(slot => {
+        if (slot.status === 'cancelled' || slot.status === 'canceled') {
+          return false;
+        }
+
+        return this.isTimeRangeOverlapping(
+          slotStartMinutes,
+          slotEndMinutes,
+          slot.startMinutes,
+          slot.endMinutes
+        );
+      });
+
+      if (!hasConflict) {
+        slots.push(this.formatTime(current));
+      }
+
+      current = new Date(current.getTime() + stepMin * 60000);
+    }
+
+
+    return slots;
+  }
+
+  formatTime(date: Date): string {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  selectTime(slot: string) {
+    this.selectedTime = slot;
+  }
+
+  toDate(value: any): Date {
+    if (!value) return new Date();
+
+    if (value?.toDate) return value.toDate();
+
+    return new Date(value);
+  }
+
+  get currentMonthLabel(): string {
+    return this.currentMonth.toLocaleDateString('lt-LT', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  get weekdayLabels(): string[] {
+    return ['Pr', 'An', 'Tr', 'Kt', 'Pn', 'Št', 'Sk'];
+  }
+  calendarOpen = false;
+  selectedDate: Date | null = null;
+  selectedTime: string | null = null;
+
+  currentMonth = new Date();
+  calendarDays: Date[] = [];
+
+  availabilityItems: AvailabilityItem[] = [];
+  timeSlots: string[] = [];
+
+  readonly bookingUserId = 'debug-user';
+  closePackageInfo() {
+    this.openedPackage = null;
+  }
+  get totalDurationMin(): number {
+    if (this.selectedPackageId) {
+      const pkg = this.packages.find(p => p.id === this.selectedPackageId);
+      return pkg?.durationMin || pkg?.duration || 0;
+    }
+
+    if (this.selectedServices.length > 0) {
+      return this.selectedServices.reduce((total, id) => {
+        const service = this.services.find(s => s.id === id);
+        return total + (service?.durationMin || 0);
+      }, 0);
+    }
+
+    return 0;
+  }
+  get formattedDuration(): string {
+    const total = this.totalDurationMin;
+
+    if (!total) return '';
+
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
+
+    if (hours === 0) {
+      return `${minutes} min`;
+    }
+
+    if (minutes === 0) {
+      return `${hours} val`;
+    }
+
+    return `${hours} val ${minutes} min`;
+  }
   /* ===== MAGIC BLOCKS ===== */
   @ViewChildren('magic') magicBlocks!: QueryList<ElementRef>;
   private currentIndex = 0;
-showScrollHint = false;
+  showScrollHint = false;
 
   /* ===== HEADER ===== */
   headerHidden = false;
@@ -33,102 +913,82 @@ showScrollHint = false;
   =============================== */
 
   faqItems = [
-  {
-    question: 'What exactly do you offer?',
-    answer:
-      'We provide fully native, white-label mobile apps for individual businesses. Each client gets their own branded iOS and Android app, powered by a shared SaaS platform that we maintain and continuously improve.'
-  },
-  {
-    question: 'How is this different from Wolt or Bolt Food?',
-    answer:
-      'Delivery platforms help you attract new customers, but they charge high commissions and own the relationship. We help you keep your customers by moving them into your own app, where you control pricing, branding, and communication.'
-  },
-  {
-    question: 'Do I get my own app or a shared app?',
-    answer:
-      'You get your own separate app with your branding, logo, and identity. Your customers download your app — not a marketplace — while we handle the infrastructure behind the scenes.'
-  },
-  {
-    question: 'How much does it cost?',
-    answer:
-      'There are no large upfront development costs. We work with a low commission model, making it affordable even for small and medium-sized businesses.'
-  },
-  {
-    question: 'Do you support payments and delivery?',
-    answer:
-      'Yes. Your app can support takeaway, delivery (if your business handles it), online payments of your choice, loyalty systems, and push notifications.'
-  },
-  {
-    question: 'Who maintains and updates the app?',
-    answer:
-      'We do. The app is continuously updated with improvements, new features, and platform updates. You don’t need to worry about App Store or Google Play changes.'
-  },
-  {
-    question: 'Can features be customized for my business?',
-    answer:
-      'Yes. We actively work with our clients, listen to their needs, and can implement custom features or improvements when they make sense.'
-  },
-  {
-    question: 'Is this suitable for small businesses?',
-    answer:
-      'Absolutely. Our platform is designed to be scalable and affordable, whether you run a single cafe or plan to grow further.'
-  }
-];
+    {
+      question: 'What exactly do you offer?',
+      answer:
+        'We provide fully native, white-label mobile apps for individual businesses. Each client gets their own branded iOS and Android app, powered by a shared SaaS platform that we maintain and continuously improve.'
+    },
+    {
+      question: 'How is this different from Wolt or Bolt Food?',
+      answer:
+        'Delivery platforms help you attract new customers, but they charge high commissions and own the relationship. We help you keep your customers by moving them into your own app, where you control pricing, branding, and communication.'
+    },
+    {
+      question: 'Do I get my own app or a shared app?',
+      answer:
+        'You get your own separate app with your branding, logo, and identity. Your customers download your app — not a marketplace — while we handle the infrastructure behind the scenes.'
+    },
+    {
+      question: 'How much does it cost?',
+      answer:
+        'There are no large upfront development costs. We work with a low commission model, making it affordable even for small and medium-sized businesses.'
+    },
+    {
+      question: 'Do you support payments and delivery?',
+      answer:
+        'Yes. Your app can support takeaway, delivery (if your business handles it), online payments of your choice, loyalty systems, and push notifications.'
+    },
+    {
+      question: 'Who maintains and updates the app?',
+      answer:
+        'We do. The app is continuously updated with improvements, new features, and platform updates. You don’t need to worry about App Store or Google Play changes.'
+    },
+    {
+      question: 'Can features be customized for my business?',
+      answer:
+        'Yes. We actively work with our clients, listen to their needs, and can implement custom features or improvements when they make sense.'
+    },
+    {
+      question: 'Is this suitable for small businesses?',
+      answer:
+        'Absolutely. Our platform is designed to be scalable and affordable, whether you run a single cafe or plan to grow further.'
+    }
+  ];
 
-packages = [
-  {
-    id: 'pkg-1',
-    name: 'Paketas 1',
-    description: 'Paketo aprašymas'
-  },
-  {
-    id: 'pkg-2',
-    name: 'Paketas 2',
-    description: 'Paketo aprašymas'
-  },
-  {
-    id: 'pkg-3',
-    name: 'Paketas 3',
-    description: 'Paketo aprašymas'
-  }
-];
+  private reservationDataService = inject(ReservationDataService);
 
-services = [
-  { id: 'srv-1', name: 'Paslauga 1', price: '€0' },
-  { id: 'srv-2', name: 'Paslauga 2', price: '€0' },
-  { id: 'srv-3', name: 'Paslauga 3', price: '€0' },
-  { id: 'srv-4', name: 'Paslauga 4', price: '€0' },
-  { id: 'srv-5', name: 'Paslauga 5', price: '€0' }
-];
+  packages: BundleItem[] = [];
+  services: ServiceItem[] = [];
 
-selectedPackageId: string | null = null;
-selectedServices: string[] = [];
+  selectedPackageId: string | null = null;
+  selectedServices: string[] = [];
 
 selectPackage(packageId: string) {
-  // если был выбран сервис — сбрасываем его
   this.selectedServices = [];
 
   this.selectedPackageId =
     this.selectedPackageId === packageId ? null : packageId;
+
+  this.resetCalendarSelection();
 }
 
 selectService(serviceId: string) {
-  // если был выбран пакет — сбрасываем его
   this.selectedPackageId = null;
 
   const exists = this.selectedServices.includes(serviceId);
 
   if (exists) {
-    this.selectedServices =
-      this.selectedServices.filter(id => id !== serviceId);
+    this.selectedServices = this.selectedServices.filter(id => id !== serviceId);
   } else {
     this.selectedServices = [...this.selectedServices, serviceId];
   }
+
+  this.resetCalendarSelection();
 }
 
-isServiceSelected(serviceId: string): boolean {
-  return this.selectedServices.includes(serviceId);
-}
+  isServiceSelected(serviceId: string): boolean {
+    return this.selectedServices.includes(serviceId);
+  }
 
 
   openFaqIndex: number | null = null;
@@ -138,57 +998,89 @@ isServiceSelected(serviceId: string): boolean {
   }
 
 
-scrollToContact(event: Event) {
-  event.preventDefault();
+  scrollToContact(event: Event) {
+    event.preventDefault();
 
-  const page = document.querySelector('.page') as HTMLElement;
-  if (!page || !this.contactSection) return;
+    const page = document.querySelector('.page') as HTMLElement;
+    if (!page || !this.contactSection) return;
 
-  const top =
-    this.contactSection.nativeElement.offsetTop;
+    const top =
+      this.contactSection.nativeElement.offsetTop;
 
-  page.scrollTo({
-    top,
-    behavior: 'smooth'
-  });
-}
-scrollToTop() {
-  const page = document.querySelector('.page') as HTMLElement;
-  page?.scrollTo({ top: 0, behavior: 'smooth' });
-}
-private setBackgroundByIndex(index: number | null) {
-  const page = document.querySelector('.page') as HTMLElement;
-  if (!page) return;
-
-  switch (index) {
-    case 0:
-      page.style.backgroundColor = '#E6F4EF'; // mint
-      break;
-    case 1:
-      page.style.backgroundColor = '#EAF1FB'; // blue
-      break;
-    case 2:
-      page.style.backgroundColor = '#FFF4E5'; // sand
-      break;
-    case 3:
-      page.style.backgroundColor = '#F1ECFA'; // lavender
-      break;
-    default:
-      page.style.backgroundColor = '#FFFFFF';
+    page.scrollTo({
+      top,
+      behavior: 'smooth'
+    });
   }
-}
+  scrollToTop() {
+    const page = document.querySelector('.page') as HTMLElement;
+    page?.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  private setBackgroundByIndex(index: number | null) {
+    const page = document.querySelector('.page') as HTMLElement;
+    if (!page) return;
 
+    switch (index) {
+      case 0:
+        page.style.backgroundColor = '#E6F4EF'; // mint
+        break;
+      case 1:
+        page.style.backgroundColor = '#EAF1FB'; // blue
+        break;
+      case 2:
+        page.style.backgroundColor = '#FFF4E5'; // sand
+        break;
+      case 3:
+        page.style.backgroundColor = '#F1ECFA'; // lavender
+        break;
+      default:
+        page.style.backgroundColor = '#FFFFFF';
+    }
+  }
+  roundUpToNextHalfHour(date: Date): Date {
+    const rounded = new Date(date);
+    rounded.setSeconds(0, 0);
+
+    const minutes = rounded.getMinutes();
+
+    if (minutes === 0 || minutes === 30) {
+      return rounded;
+    }
+
+    if (minutes < 30) {
+      rounded.setMinutes(30);
+      return rounded;
+    }
+
+    rounded.setHours(rounded.getHours() + 1);
+    rounded.setMinutes(0);
+    return rounded;
+  }
 
   ngAfterViewInit() {
 
+    this.availabilityService.getAvailability(this.bookingUserId).subscribe(data => {
+      this.availabilityItems = data;
+      this.generateCalendarDays();
+    });
+
+    this.reservationDataService.getBundles().subscribe(data => {
+      console.log('BUNDLES FROM DB:', data);
+      this.packages = data;
+    });
+
+    this.reservationDataService.getServices().subscribe(data => {
+      console.log('SERVICES FROM DB:', data);
+      this.services = data;
+    });
     /* ===============================
        MAGIC BLOCKS (page container)
     =============================== */
 
     const page = document.querySelector('.page') as HTMLElement;
     const blocks = this.magicBlocks.toArray();
-// 🔥 выставляем фон для первого блока при старте
-this.setBackgroundByIndex(0);
+    // 🔥 выставляем фон для первого блока при старте
+    this.setBackgroundByIndex(0);
 
     const observer = new IntersectionObserver(
       entries => {
@@ -217,17 +1109,17 @@ this.setBackgroundByIndex(0);
     );
 
     blocks.forEach(b => observer.observe(b.nativeElement));
-page.addEventListener('scroll', () => {
-  const lastMagic = this.magicBlocks.last?.nativeElement;
-  if (!lastMagic) return;
+    page.addEventListener('scroll', () => {
+      const lastMagic = this.magicBlocks.last?.nativeElement;
+      if (!lastMagic) return;
 
-  const lastMagicBottom =
-    lastMagic.offsetTop + lastMagic.offsetHeight;
+      const lastMagicBottom =
+        lastMagic.offsetTop + lastMagic.offsetHeight;
 
-  if (page.scrollTop > lastMagicBottom - page.clientHeight / 2) {
-    this.setBackgroundByIndex(null); // возвращаем белый
-  }
-});
+      if (page.scrollTop > lastMagicBottom - page.clientHeight / 2) {
+        this.setBackgroundByIndex(null); // возвращаем белый
+      }
+    });
 
     /* ===============================
        FLOATING HEADER (WINDOW SCROLL)
@@ -238,32 +1130,32 @@ page.addEventListener('scroll', () => {
 =============================== */
 
 
-page.addEventListener('scroll', () => {
-  const current = page.scrollTop;
+    page.addEventListener('scroll', () => {
+      const current = page.scrollTop;
 
-  // всегда виден в самом верху
-  if (current < 40) {
-    this.headerHidden = false;
-    this.lastScrollY = current;
-    return;
-  }
+      // всегда виден в самом верху
+      if (current < 40) {
+        this.headerHidden = false;
+        this.lastScrollY = current;
+        return;
+      }
 
-  // анти-дёрганье
-  if (Math.abs(current - this.lastScrollY) < 8) return;
+      // анти-дёрганье
+      if (Math.abs(current - this.lastScrollY) < 8) return;
 
-  if (current > this.lastScrollY) {
-    // ⬇️ скролл вниз
-    this.headerHidden = true;
-  } else {
-    // ⬆️ скролл вверх
-    this.headerHidden = false;
-  }
+      if (current > this.lastScrollY) {
+        // ⬇️ скролл вниз
+        this.headerHidden = true;
+      } else {
+        // ⬆️ скролл вверх
+        this.headerHidden = false;
+      }
 
-  this.lastScrollY = current;
-});
-  setTimeout(() => {
-    this.showScrollHint = true;
-  }, 1000);
+      this.lastScrollY = current;
+    });
+    setTimeout(() => {
+      this.showScrollHint = true;
+    }, 1000);
 
   }
 }
