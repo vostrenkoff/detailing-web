@@ -77,6 +77,7 @@ selectedPickupSlot: TransferSlotOption | null = null;
 
 selectedReturnDate: Date | null = null;
 selectedReturnSlot: TransferSlotOption | null = null;
+
 selectPickupSlot(slot: TransferSlotOption): void {
   this.selectedPickupDate = slot.date;
   this.selectedPickupSlot = slot;
@@ -85,9 +86,6 @@ selectPickupSlot(slot: TransferSlotOption): void {
   this.selectedReturnSlot = null;
   this.returnSlots = [];
 
-  this.pickupReturnStep = 'return';
-
-  // сразу пересчитываем return-слоты для уже выбранного дня
   if (this.selectedDate) {
     const allReturnSlots = this.generateTransferSlotsForDay(this.selectedDate);
 
@@ -299,130 +297,151 @@ roundMinutesUpToNextHalfHour(totalMin: number): number {
   return totalMin + (30 - remainder);
 }
 
+
 websitePackages: WebsiteServiceItem[] = [
   {
     title: 'Mini paketas',
     shortDescription: 'Greitas ir tvarkingas automobilio atnaujinimas kasdienai.',
     fullDescription:
       'Puikus pasirinkimas tiems, kas nori greitai atgaivinti automobilio išvaizdą be pilno detailing proceso. Tinka reguliariai priežiūrai ir kasdien naudojamiems automobiliams.',
-    price: 'nuo 69 €',
-    includes: ['Išorės plovimas', 'Salono siurbimas', 'Langų valymas', 'Paviršių nuvalymas']
+    price: 'nuo 60 €',
+    includes: ['Rankinis kėbulo plovimas', 'Saugus džiovinimas', 'Salono siurbimas', 'Kilimėlių valymas', 'Dulkių nuvalymas', 'Langų valymas (viduje ir išorėje)', 'Vaškas (kėbulo apsauga)']
   },
   {
     title: 'Standartinis paketas',
     shortDescription: 'Populiariausias variantas kruopščiam salono ir išorės sutvarkymui.',
     fullDescription:
       'Subalansuotas paketas klientams, kurie nori ne tik švaros, bet ir ryškesnio vizualinio rezultato. Idealiai tinka sezoniniam atnaujinimui arba prieš pardavimą.',
-    price: 'nuo 129 €',
-    includes: ['Gilus išorės plovimas', 'Salono valymas', 'Plastikų atgaivinimas', 'Langai', 'Padangų juodinimas']
+    price: 'nuo 90 €',
+    includes: [ 'Viskas iš Mini paketo', 'Detalus salono valymas', 'Plastiko valymas + apsauga', 'Bagažinės valymas', 'Detalus ratlankių ir arkų valymas']
   },
   {
     title: 'Premium paketas',
     shortDescription: 'Maksimalus efektas tiems, kas nori geriausio rezultato.',
     fullDescription:
       'Pilnas detailing paketas reikliems klientams. Daugiau dėmesio detalėms, daugiau kruopštumo, daugiau vizualinio efekto. Tinka tiems, kas nori, kad automobilis atrodytų kuo geriau.',
-    price: 'nuo 249 €',
-    includes: ['Pilnas salono detailingas', 'Daugiaetapis išorės valymas', 'Dažų paruošimas', 'Apsauginės priemonės', 'Maksimalus užbaigimas']
+    price: 'nuo 180 €',
+    includes: [ 'Viskas iš Standartinio paketo', 'Sėdynių cheminis valymas + dėmių šalinimas', 'Tefloninė danga (premium kėbulo apsauga)']
   }
 ];
 
 websiteSingleServices: WebsiteServiceItem[] = [
+  // {
+  //   title: 'Išorės plovimas',
+  //   shortDescription: 'Saugus rankinis automobilio išorės plovimas.',
+  //   fullDescription:
+  //     'Kruopštus rankinis plovimas naudojant profesionalias priemones, skirtas saugiai pašalinti nešvarumus nuo kėbulo, ratlankių ir kitų išorės paviršių.',
+  //   price: 'nuo 25 €',
+  //   includes: ['Kėbulas', 'Ratų valymas', 'Saugios priemonės']
+  // },
+  // {
+  //   title: 'Salono valymas',
+  //   shortDescription: 'Kasdienis salono atnaujinimas ir švaros sugrąžinimas.',
+  //   fullDescription:
+  //     'Išvalomos pagrindinės salono zonos: grindys, kilimėliai, sėdynės, panelė ir kiti paviršiai. Puikus pasirinkimas norint palaikyti švarų ir malonų saloną.',
+  //   price: 'nuo 35 €',
+  //   includes: ['Siurbimas', 'Paviršių valymas', 'Kilimėliai']
+  // },
+  // {
+  //   title: 'Giluminis salono valymas',
+  //   shortDescription: 'Gilesnis salono valymas stipresniems nešvarumams.',
+  //   fullDescription:
+  //     'Skirta automobiliams, kurių salonas reikalauja daugiau dėmesio. Valomos sunkiau pasiekiamos vietos, pašalinami įsisenėję nešvarumai ir atgaivinama bendra salono išvaizda.',
+  //   price: 'nuo 89 €',
+  //   includes: ['Gilesnis valymas', 'Dėmės', 'Daugiau dėmesio detalėms']
+  // },
+  // {
+  //   title: 'Sėdynių cheminis valymas',
+  //   shortDescription: 'Audinių ar tekstilinių sėdynių valymas cheminiu būdu.',
+  //   fullDescription:
+  //     'Efektyvus būdas pašalinti dėmes, kvapus ir giliai įsigėrusius nešvarumus iš tekstilinių sėdynių, grąžinant joms gaivesnę ir tvarkingesnę būklę.',
+  //   price: 'nuo 49 €',
+  //   includes: ['Dėmių mažinimas', 'Kvapo gaivinimas', 'Tekstilės priežiūra']
+  // },
+  // {
+  //   title: 'Odos valymas ir impregnavimas',
+  //   shortDescription: 'Odinio salono priežiūra ir apsauga.',
+  //   fullDescription:
+  //     'Oda išvaloma specialiomis priemonėmis, po to padengiama apsauginiu sluoksniu, kuris padeda ilgiau išlaikyti minkštumą, švarą ir estetinę išvaizdą.',
+  //   price: 'nuo 59 €',
+  //   includes: ['Odos valymas', 'Maitinimas', 'Apsauga']
+  // },
+  // {
+  //   title: 'Variklio skyriaus valymas',
+  //   shortDescription: 'Tvarkingas ir saugus variklio skyriaus sutvarkymas.',
+  //   fullDescription:
+  //     'Atsargus variklio skyriaus valymas naudojant tam pritaikytas priemones. Tikslas yra pašalinti dulkes, purvą ir suteikti tvarkingesnę bendrą išvaizdą.',
+  //   price: 'nuo 39 €',
+  //   includes: ['Saugus valymas', 'Plastikų atgaivinimas', 'Tvarkingas vaizdas']
+  // },
+  // {
+  //   title: 'Vieno etapo poliravimas',
+  //   shortDescription: 'Blizgesio atnaujinimas ir smulkių defektų sumažinimas.',
+  //   fullDescription:
+  //     'Lengvas dažų paviršiaus atnaujinimas, skirtas pagerinti blizgesį ir sumažinti smulkių įbrėžimų bei hologramų matomumą.',
+  //   price: 'nuo 149 €',
+  //   includes: ['Blizgesio atkūrimas', 'Smulkūs defektai', 'Vizualinis efektas']
+  // },
+  // {
+  //   title: 'Dviejų etapų poliravimas',
+  //   shortDescription: 'Gilesnis dažų koregavimas geresniam rezultatui.',
+  //   fullDescription:
+  //     'Išsamesnis poliravimo procesas, leidžiantis efektyviau sumažinti matomus defektus ir išgauti ryškesnį, gilesnį automobilio blizgesį.',
+  //   price: 'nuo 249 €',
+  //   includes: ['Dažų korekcija', 'Ryškesnis blizgesys', 'Didesnis efektas']
+  // },
+  // {
+  //   title: 'Keraminė danga',
+  //   shortDescription: 'Dažų paviršiaus apsauga ir lengvesnė priežiūra.',
+  //   fullDescription:
+  //     'Keraminė danga padeda apsaugoti automobilio paviršių nuo aplinkos poveikio, palengvina priežiūrą ir suteikia išraiškingesnį blizgesį.',
+  //   price: 'nuo 299 €',
+  //   includes: ['Paviršiaus apsauga', 'Lengvesnė priežiūra', 'Hidrofobinis efektas']
+  // },
+  // {
+  //   title: 'Žibintų poliravimas',
+  //   shortDescription: 'Pagerina žibintų išvaizdą ir skaidrumą.',
+  //   fullDescription:
+  //     'Pašalinamas apsiblausimas ir paviršiaus oksidacija, kad žibintai atrodytų tvarkingiau ir šviesa sklistų švariau.',
+  //   price: 'nuo 39 €',
+  //   includes: ['Skaidrumas', 'Tvarkingesnė išvaizda', 'Atnaujinimas']
+  // },
+  // {
+  //   title: 'Apsauginis vaškas',
+  //   shortDescription: 'Greita išorės apsauga ir papildomas blizgesys.',
+  //   fullDescription:
+  //     'Apsauginio vaško sluoksnis suteikia malonų vizualinį efektą, padeda lengviau palaikyti švarą ir papildo automobilio priežiūros procesą.',
+  //   price: 'nuo 29 €',
+  //   includes: ['Blizgesys', 'Trumpalaikė apsauga', 'Lengvesnė priežiūra']
+  // },
   {
-    title: 'Išorės plovimas',
-    shortDescription: 'Saugus rankinis automobilio išorės plovimas.',
+    title: 'Kvapo šalinimas',
+    shortDescription: 'Nemalonių kvapų sumažinimas salone',
     fullDescription:
-      'Kruopštus rankinis plovimas naudojant profesionalias priemones, skirtas saugiai pašalinti nešvarumus nuo kėbulo, ratlankių ir kitų išorės paviršių.',
-    price: 'nuo 25 €',
-    includes: ['Kėbulas', 'Ratų valymas', 'Saugios priemonės']
-  },
-  {
-    title: 'Salono valymas',
-    shortDescription: 'Kasdienis salono atnaujinimas ir švaros sugrąžinimas.',
-    fullDescription:
-      'Išvalomos pagrindinės salono zonos: grindys, kilimėliai, sėdynės, panelė ir kiti paviršiai. Puikus pasirinkimas norint palaikyti švarų ir malonų saloną.',
-    price: 'nuo 35 €',
-    includes: ['Siurbimas', 'Paviršių valymas', 'Kilimėliai']
-  },
-  {
-    title: 'Giluminis salono valymas',
-    shortDescription: 'Gilesnis salono valymas stipresniems nešvarumams.',
-    fullDescription:
-      'Skirta automobiliams, kurių salonas reikalauja daugiau dėmesio. Valomos sunkiau pasiekiamos vietos, pašalinami įsisenėję nešvarumai ir atgaivinama bendra salono išvaizda.',
-    price: 'nuo 89 €',
-    includes: ['Gilesnis valymas', 'Dėmės', 'Daugiau dėmesio detalėms']
-  },
-  {
-    title: 'Sėdynių cheminis valymas',
-    shortDescription: 'Audinių ar tekstilinių sėdynių valymas cheminiu būdu.',
-    fullDescription:
-      'Efektyvus būdas pašalinti dėmes, kvapus ir giliai įsigėrusius nešvarumus iš tekstilinių sėdynių, grąžinant joms gaivesnę ir tvarkingesnę būklę.',
-    price: 'nuo 49 €',
-    includes: ['Dėmių mažinimas', 'Kvapo gaivinimas', 'Tekstilės priežiūra']
-  },
-  {
-    title: 'Odos valymas ir impregnavimas',
-    shortDescription: 'Odinio salono priežiūra ir apsauga.',
-    fullDescription:
-      'Oda išvaloma specialiomis priemonėmis, po to padengiama apsauginiu sluoksniu, kuris padeda ilgiau išlaikyti minkštumą, švarą ir estetinę išvaizdą.',
-    price: 'nuo 59 €',
-    includes: ['Odos valymas', 'Maitinimas', 'Apsauga']
+      'Naudojamos specialios priemonės, padedančios sumažinti ar pašalinti nemalonius kvapus salone ir suteikti gaivesnį pojūtį.',
+    price: 'nuo 20 €',
+    includes: ['Salono gaivinimas', 'Kvapų mažinimas', 'Švaresnis pojūtis']
   },
   {
     title: 'Variklio skyriaus valymas',
-    shortDescription: 'Tvarkingas ir saugus variklio skyriaus sutvarkymas.',
+    shortDescription: 'Tvarkingas ir saugus variklio skyriaus sutvarkymas',
     fullDescription:
       'Atsargus variklio skyriaus valymas naudojant tam pritaikytas priemones. Tikslas yra pašalinti dulkes, purvą ir suteikti tvarkingesnę bendrą išvaizdą.',
-    price: 'nuo 39 €',
+    price: 'nuo 30 €',
     includes: ['Saugus valymas', 'Plastikų atgaivinimas', 'Tvarkingas vaizdas']
   },
   {
-    title: 'Vieno etapo poliravimas',
-    shortDescription: 'Blizgesio atnaujinimas ir smulkių defektų sumažinimas.',
-    fullDescription:
-      'Lengvas dažų paviršiaus atnaujinimas, skirtas pagerinti blizgesį ir sumažinti smulkių įbrėžimų bei hologramų matomumą.',
-    price: 'nuo 149 €',
-    includes: ['Blizgesio atkūrimas', 'Smulkūs defektai', 'Vizualinis efektas']
-  },
-  {
-    title: 'Dviejų etapų poliravimas',
-    shortDescription: 'Gilesnis dažų koregavimas geresniam rezultatui.',
-    fullDescription:
-      'Išsamesnis poliravimo procesas, leidžiantis efektyviau sumažinti matomus defektus ir išgauti ryškesnį, gilesnį automobilio blizgesį.',
-    price: 'nuo 249 €',
-    includes: ['Dažų korekcija', 'Ryškesnis blizgesys', 'Didesnis efektas']
-  },
-  {
-    title: 'Keraminė danga',
-    shortDescription: 'Dažų paviršiaus apsauga ir lengvesnė priežiūra.',
-    fullDescription:
-      'Keraminė danga padeda apsaugoti automobilio paviršių nuo aplinkos poveikio, palengvina priežiūrą ir suteikia išraiškingesnį blizgesį.',
-    price: 'nuo 299 €',
-    includes: ['Paviršiaus apsauga', 'Lengvesnė priežiūra', 'Hidrofobinis efektas']
-  },
-  {
-    title: 'Žibintų poliravimas',
-    shortDescription: 'Pagerina žibintų išvaizdą ir skaidrumą.',
-    fullDescription:
-      'Pašalinamas apsiblausimas ir paviršiaus oksidacija, kad žibintai atrodytų tvarkingiau ir šviesa sklistų švariau.',
-    price: 'nuo 39 €',
-    includes: ['Skaidrumas', 'Tvarkingesnė išvaizda', 'Atnaujinimas']
-  },
-  {
-    title: 'Apsauginis vaškas',
-    shortDescription: 'Greita išorės apsauga ir papildomas blizgesys.',
-    fullDescription:
-      'Apsauginio vaško sluoksnis suteikia malonų vizualinį efektą, padeda lengviau palaikyti švarą ir papildo automobilio priežiūros procesą.',
-    price: 'nuo 29 €',
-    includes: ['Blizgesys', 'Trumpalaikė apsauga', 'Lengvesnė priežiūra']
-  },
-  {
-    title: 'Kvapo šalinimas',
-    shortDescription: 'Nemalonių kvapų sumažinimas salone.',
-    fullDescription:
-      'Naudojamos specialios priemonės, padedančios sumažinti ar pašalinti nemalonius kvapus salone ir suteikti gaivesnį pojūtį.',
-    price: 'nuo 25 €',
-    includes: ['Salono gaivinimas', 'Kvapų mažinimas', 'Švaresnis pojūtis']
-  }
+  title: "Bitumo ir kelio nešvarumų šalinimas",
+  shortDescription: "Sunkiai pašalinamų kelio nešvarumų valymas nuo kėbulo.",
+  fullDescription:
+    "Naudojamos specialios cheminės priemonės bitumo, dervų, druskų ir kitų įsisenėjusių kelio nešvarumų pašalinimui nuo kėbulo paviršiaus. Padeda atkurti švaresnę ir lygesnę automobilio išvaizdą prieš tolimesnes priežiūros procedūras.",
+  price: "nuo 60 €",
+  includes: [
+    "Bitumo dėmių šalinimas",
+    "Kelio nešvarumų valymas",
+    "Kėbulo paviršiaus paruošimas"
+  ]
+}
 ];
 
 selectedServiceInfo: SelectedWebsiteServiceInfo | null = null;
@@ -649,7 +668,7 @@ closeWebsiteServiceInfo(): void {
 
     return `${datePart}-${randomPart}`;
   }
-  get isDetailsStepValid(): boolean {
+get isDetailsStepValid(): boolean {
   const hasTransportAddress =
     this.deliveryMode === 'self'
       ? true
@@ -661,16 +680,21 @@ closeWebsiteServiceInfo(): void {
       ? !!this.selectedDate && !!this.selectedTime
       : !!this.selectedPickupSlot && !!this.selectedReturnSlot;
 
+  const hasServiceAddress =
+    this.deliveryMode === 'self'
+      ? !!this.selectedAddress.trim()
+      : true;
+
   return !!(
     this.customerFirstName.trim() &&
     this.customerLastName.trim() &&
     this.customerCountryCode.trim() &&
     this.customerPhone.trim() &&
     this.customerEmail.trim() &&
-    this.selectedAddress.trim() &&
     this.paymentMethod.trim() &&
     hasTimeSelection &&
-    hasTransportAddress
+    hasTransportAddress &&
+    hasServiceAddress
   );
 }
 setDeliveryMode(mode: 'self' | 'pickup_return'): void {
@@ -956,80 +980,84 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   const returnTaskRef = doc(collection(this.firestore, 'pickupsDropoffs'));
 
   batch.set(pickupTaskRef, {
-    type: 'pickup',
-    reservationId: reservationRef.id,
-    orderNumber,
-    status: 'new',
-    createdAt: serverTimestamp(),
+  type: 'pickup',
+  reservationId: reservationRef.id,
+  orderNumber,
+  status: 'new',
+  createdAt: serverTimestamp(),
 
-    date: pickupSlot!.date.toISOString(),
-    dateKey: pickupSlot!.dateKey,
-    startMinutes: pickupSlot!.startMinutes,
-    endMinutes: pickupSlot!.endMinutes,
-    label: pickupSlot!.label,
+  date: pickupSlot!.date.toISOString(),
+  dateKey: pickupSlot!.dateKey,
+  startMinutes: pickupSlot!.startMinutes,
+  endMinutes: pickupSlot!.endMinutes,
+  label: pickupSlot!.label,
 
-    customer: {
-      firstName: this.customerFirstName.trim(),
-      lastName: this.customerLastName.trim(),
-      phone: this.fullPhoneNumber,
-      email: this.customerEmail.trim()
-    },
+  customer: {
+    firstName: this.customerFirstName.trim(),
+    lastName: this.customerLastName.trim(),
+    phone: this.fullPhoneNumber,
+    email: this.customerEmail.trim()
+  },
 
-    vehicleAddress: this.pickupReturnAddress.trim(),
-    serviceAddress: this.selectedAddress,
+  pickupAddress: this.pickupAddress.trim(),
+  returnAddress: this.effectiveReturnAddress,
+  vehicleAddress: this.pickupAddress.trim(),
+  serviceAddress: null,
 
-    selection: {
-      packageId: this.selectedPackage?.id || null,
-      packageTitle: this.selectedPackage?.title || null,
-      services: this.selectedServiceItems.map(service => ({
-        id: service.id,
-        title: service.title,
-        price: service.price,
-        durationMin: service.durationMin
-      }))
-    },
+  selection: {
+    packageId: this.selectedPackage?.id || null,
+    packageTitle: this.selectedPackage?.title || null,
+    services: this.selectedServiceItems.map(service => ({
+      id: service.id,
+      title: service.title,
+      price: service.price,
+      durationMin: service.durationMin
+    }))
+  },
 
-    paymentMethod: this.paymentMethod,
-    allowPromoFilming: this.allowPromoFilming
-  });
+  paymentMethod: this.paymentMethod,
+  allowPromoFilming: this.allowPromoFilming
+});
 
   batch.set(returnTaskRef, {
-    type: 'return',
-    reservationId: reservationRef.id,
-    orderNumber,
-    status: 'new',
-    createdAt: serverTimestamp(),
+  type: 'return',
+  reservationId: reservationRef.id,
+  orderNumber,
+  status: 'new',
+  createdAt: serverTimestamp(),
 
-    date: returnSlot!.date.toISOString(),
-    dateKey: returnSlot!.dateKey,
-    startMinutes: returnSlot!.startMinutes,
-    endMinutes: returnSlot!.endMinutes,
-    label: returnSlot!.label,
+  date: returnSlot!.date.toISOString(),
+  dateKey: returnSlot!.dateKey,
+  startMinutes: returnSlot!.startMinutes,
+  endMinutes: returnSlot!.endMinutes,
+  label: returnSlot!.label,
 
-    customer: {
-      firstName: this.customerFirstName.trim(),
-      lastName: this.customerLastName.trim(),
-      phone: this.fullPhoneNumber,
-      email: this.customerEmail.trim()
-    },
+  customer: {
+    firstName: this.customerFirstName.trim(),
+    lastName: this.customerLastName.trim(),
+    phone: this.fullPhoneNumber,
+    email: this.customerEmail.trim()
+  },
 
-    vehicleAddress: this.pickupReturnAddress.trim(),
-    serviceAddress: this.selectedAddress,
+  pickupAddress: this.pickupAddress.trim(),
+  returnAddress: this.effectiveReturnAddress,
+  vehicleAddress: this.effectiveReturnAddress,
+  serviceAddress: null,
 
-    selection: {
-      packageId: this.selectedPackage?.id || null,
-      packageTitle: this.selectedPackage?.title || null,
-      services: this.selectedServiceItems.map(service => ({
-        id: service.id,
-        title: service.title,
-        price: service.price,
-        durationMin: service.durationMin
-      }))
-    },
+  selection: {
+    packageId: this.selectedPackage?.id || null,
+    packageTitle: this.selectedPackage?.title || null,
+    services: this.selectedServiceItems.map(service => ({
+      id: service.id,
+      title: service.title,
+      price: service.price,
+      durationMin: service.durationMin
+    }))
+  },
 
-    paymentMethod: this.paymentMethod,
-    allowPromoFilming: this.allowPromoFilming
-  });
+  paymentMethod: this.paymentMethod,
+  allowPromoFilming: this.allowPromoFilming
+});
 } else {
   const busySlotRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
 
@@ -1061,7 +1089,8 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   address: this.selectedAddress,
 
   deliveryMode: this.deliveryMode,
-  pickupReturnAddress: isPickupReturn ? this.pickupReturnAddress.trim() : null,
+  pickupAddress: isPickupReturn ? this.pickupAddress.trim() : null,
+  returnAddress: isPickupReturn ? this.effectiveReturnAddress : null,
 
   pickup: isPickupReturn ? {
     date: pickupSlot!.date.toISOString(),
@@ -1214,13 +1243,29 @@ openCalendar() {
     return this.services.filter(service => this.selectedServices.includes(service.id));
   }
 
-  get totalPrice(): number {
-    if (this.selectedPackage) {
-      return this.selectedPackage.price || 0;
-    }
-
-    return this.selectedServiceItems.reduce((sum, service) => sum + (service.price || 0), 0);
+  get servicesSubtotal(): number {
+  if (this.selectedPackage) {
+    return this.selectedPackage.price || 0;
   }
+
+  return this.selectedServiceItems.reduce((sum, service) => sum + (service.price || 0), 0);
+}
+
+get pickupReturnFee(): number {
+  if (this.deliveryMode !== 'pickup_return') return 0;
+  return this.servicesSubtotal >= 50 ? 0 : 20;
+}
+
+get totalPrice(): number {
+  return this.servicesSubtotal + this.pickupReturnFee;
+}
+  get hasPaidPickupReturn(): boolean {
+  return this.deliveryMode === 'pickup_return' && this.pickupReturnFee > 0;
+}
+
+get isPickupReturnFree(): boolean {
+  return this.deliveryMode === 'pickup_return' && this.pickupReturnFee === 0;
+}
 
   get formattedSelectedDate(): string {
     if (!this.selectedDate) return '';
@@ -1342,18 +1387,18 @@ selectDate(day: Date) {
       );
 
       if (this.deliveryMode === 'pickup_return') {
-        if (this.pickupReturnStep === 'pickup') {
-          this.pickupSlots = this.generateTransferSlotsForDay(day);
-        } else {
-          const allReturnSlots = this.generateTransferSlotsForDay(day);
+  this.pickupSlots = this.generateTransferSlotsForDay(day);
 
-          this.returnSlots = this.selectedPickupSlot
-            ? allReturnSlots.filter(slot => this.canFitWashBetweenPickupAndReturn(this.selectedPickupSlot!, slot))
-            : [];
-        }
-      } else {
-        this.generateTimeSlotsForDay(day);
-      }
+  const allReturnSlots = this.generateTransferSlotsForDay(day);
+
+  this.returnSlots = this.selectedPickupSlot
+    ? allReturnSlots.filter(slot =>
+        this.canFitWashBetweenPickupAndReturn(this.selectedPickupSlot!, slot)
+      )
+    : [];
+} else {
+  this.generateTimeSlotsForDay(day);
+}
     });
 }
 
@@ -1479,6 +1524,31 @@ selectDate(day: Date) {
 
     return 0;
   }
+
+beforeAfterPosition = 50;
+
+onBeforeAfterMove(event: MouseEvent): void {
+  const container = event.currentTarget as HTMLElement;
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const percent = (x / rect.width) * 100;
+
+  this.beforeAfterPosition = Math.max(0, Math.min(100, percent));
+}
+
+onBeforeAfterTouch(event: TouchEvent): void {
+  const container = event.currentTarget as HTMLElement;
+  if (!container || !event.touches.length) return;
+
+  const rect = container.getBoundingClientRect();
+  const x = event.touches[0].clientX - rect.left;
+  const percent = (x / rect.width) * 100;
+
+  this.beforeAfterPosition = Math.max(0, Math.min(100, percent));
+}
+
   get formattedDuration(): string {
     const total = this.totalDurationMin;
 
@@ -1512,45 +1582,56 @@ selectDate(day: Date) {
 
   faqItems = [
     {
-      question: 'What exactly do you offer?',
+      question: 'Kiek laiko trunka automobilio valymas?',
       answer:
-        'We provide fully native, white-label mobile apps for individual businesses. Each client gets their own branded iOS and Android app, powered by a shared SaaS platform that we maintain and continuously improve.'
+        'Valymo trukmė priklauso nuo pasirinktų paslaugų ir automobilio būklės. Paprastas plovimas gali užtrukti apie 1–2 val., o pilnas detailingas – nuo 3 iki 8 val. Tiksli trukmė nurodoma rezervacijos metu.'
     },
     {
-      question: 'How is this different from Wolt or Bolt Food?',
+      question: 'Kas įeina į salono valymą?',
       answer:
-        'Delivery platforms help you attract new customers, but they charge high commissions and own the relationship. We help you keep your customers by moving them into your own app, where you control pricing, branding, and communication.'
+        'Salono valymas apima siurbimą, paviršių nuvalymą, plastikų atnaujinimą, langų valymą. Giluminio valymo metu papildomai šalinamos dėmės ir gilesni nešvarumai.'
     },
     {
-      question: 'Do I get my own app or a shared app?',
+      question: 'Ar pašalinamos visos dėmės ir kvapai?',
       answer:
-        'You get your own separate app with your branding, logo, and identity. Your customers download your app — not a marketplace — while we handle the infrastructure behind the scenes.'
+        'Daugumą dėmių ir kvapų galima ženkliai sumažinti arba visiškai pašalinti, tačiau tai priklauso nuo jų pobūdžio ir įsisenėjimo. Apie galutinį rezultatą informuojame prieš darbų pradžią.'
     },
     {
-      question: 'How much does it cost?',
+      question: 'Ar saugu mano automobilio dažams?',
       answer:
-        'There are no large upfront development costs. We work with a low commission model, making it affordable even for small and medium-sized businesses.'
+        'Taip. Naudojame profesionalias, saugias priemones ir metodus, kurie nepažeidžia dažų paviršiaus ir padeda išlaikyti jo būklę.'
     },
     {
-      question: 'Do you support payments and delivery?',
+      question: 'Ar reikia rezervuoti iš anksto?',
       answer:
-        'Yes. Your app can support takeaway, delivery (if your business handles it), online payments of your choice, loyalty systems, and push notifications.'
+        'Taip. :)'
     },
     {
-      question: 'Who maintains and updates the app?',
+      question: 'Ar galima atsiskaityti vietoje?',
       answer:
-        'We do. The app is continuously updated with improvements, new features, and platform updates. You don’t need to worry about App Store or Google Play changes.'
+        'Taip, šiuo metu atsiskaitymas galimas atvykus (grynaisiais). Ateityje planuojame įdiegti ir kitus mokėjimo būdus.'
     },
     {
-      question: 'Can features be customized for my business?',
+      question: 'Ar teikiate automobilio paėmimo ir grąžinimo paslaugą?',
       answer:
-        'Yes. We actively work with our clients, listen to their needs, and can implement custom features or improvements when they make sense.'
+        'Taip, siūlome nemokamą automobilio paėmimą ir grąžinimą Vilniuje užsakymams nuo 50 €. Mažesniems užsakymams taikomas 20 € mokestis.'
     },
     {
-      question: 'Is this suitable for small businesses?',
+      question: 'Ar galiu atšaukti ar pakeisti rezervaciją?',
       answer:
-        'Absolutely. Our platform is designed to be scalable and affordable, whether you run a single cafe or plan to grow further.'
-    }
+        'Taip, rezervaciją galite pakeisti arba atšaukti susisiekę su mumis iš anksto.'
+    },
+    {
+      question: 'Ar teikiate automobilio paėmimo ir grąžinimo paslaugą?',
+      answer:
+        'Taip, siūlome nemokamą automobilio paėmimą ir grąžinimą Vilniuje užsakymams nuo 50 €. Mažesniems užsakymams taikomas 20 € mokestis.'
+    },
+    {
+      question: 'Ar dirbate su visų tipų automobiliais?',
+      answer:
+        'Taip, dirbame su įvairių tipų automobiliais – nuo mažų miesto automobilių iki didesnių SUV.'
+    },
+    
   ];
 
   private reservationDataService = inject(ReservationDataService);

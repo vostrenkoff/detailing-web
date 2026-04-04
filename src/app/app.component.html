@@ -10,7 +10,7 @@
 
     <nav class="nav">
       <a href="#" (click)="scrollToContact($event)" class="active">
-        Contact Us
+        Registracija
       </a>
 
 
@@ -160,26 +160,57 @@
         </div>
 
       </div>
+      
     </div>
+    <div class="hero-actions">
+          <button class="hero-button" (click)="scrollToContact($event)">
+            Registracija
+          </button>
+        </div>
   </section>
+<section class="before-after-showcase">
+  <div class="before-after-inner">
+    <div class="before-after-left">
+      <div
+        class="before-after-card"
+        (mousemove)="onBeforeAfterMove($event)"
+        (touchmove)="onBeforeAfterTouch($event)"
+      >
+        <img src="/old.png" alt="Prieš" class="before-image" />
 
-  <section class="magic block-2" #magic>
-    <div class="content">
-      <div class="text">
-        <h2 class="magic-title">Our goal</h2>
-        <p class="magic-desc">
-          Our mission is to make high-quality, affordable apps for businesses.
-          We provide separate branded applications powered by a shared SaaS platform — keeping commissions low,
-          maintenance simple, and updates continuous.
+        <div
+          class="after-mask"
+          [style.clip-path]="'inset(0 ' + (100 - beforeAfterPosition) + '% 0 0)'"
+        >
+          <img src="/new.png" alt="Po" class="after-image" />
+        </div>
+
+        <div class="before-after-divider" [style.left.%]="beforeAfterPosition">
+          <div class="before-after-handle">↔</div>
+        </div>
+
+        <div class="before-after-badge before-badge">Prieš</div>
+        <div class="before-after-badge after-badge">Po</div>
+      </div>
+    </div>
+
+    <div class="before-after-right">
+      <div class="before-after-content">
+        <div class="before-after-eyebrow">Rezultatai</div>
+        <h2 class="before-after-title">Pamatyk skirtumą prieš ir po</h2>
+        <p class="before-after-text">
+          Tikri rezultatai, tikri automobiliai. Peržiūrėkite daugiau mūsų atliktų darbų galerijoje.
         </p>
 
+        <button type="button" class="gallery-button">
+          Galerija
+        </button>
       </div>
-
-      <img class="magic-icon" src="/2img.webp" alt="" />
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="magic block-3" #magic>
+  <!-- <section class="magic block-3" #magic>
     <div class="content">
       <div class="text">
         <h2 class="magic-title">What can you do with us?</h2>
@@ -208,11 +239,11 @@
 
       <img class="magic-icon" src="/4img.webp" alt="" />
     </div>
-  </section>
+  </section> -->
 
 
   <!-- PARTNERSHIP CTA -->
-  <section class="partner">
+  <!-- <section class="partner">
     <div class="partner-title">
       What our clients say
     </div>
@@ -254,26 +285,40 @@
         [class.active]="getActiveDotIndex() === i" (click)="goToReview(i)"
         [attr.aria-label]="'Go to review ' + (i + 1)"></button>
     </div>
-  </section>
+  </section> -->
 
   <!-- FAQ -->
-  <section class="faq">
-    <h1>FAQ</h1>
+<section class="faq" #magic>
+  <div class="faq-inner">
+    <div class="faq-head">
+      <div class="faq-eyebrow">DUK</div>
+      <h2 class="faq-title">Dažniausiai užduodami klausimai</h2>
+      <p class="faq-subtitle">
+        Trumpi atsakymai į svarbiausius klausimus apie rezervaciją, valymo procesą ir automobilio paėmimą.
+      </p>
+    </div>
 
     <div class="faq-list">
-      <div class="faq-item" *ngFor="let item of faqItems; let i = index" [class.open]="openFaqIndex === i"
-        (click)="toggleFaq(i)">
+      <div
+        class="faq-item"
+        *ngFor="let item of faqItems; let i = index"
+        [class.open]="openFaqIndex === i"
+        (click)="toggleFaq(i)"
+      >
         <div class="faq-question">
           <span>{{ item.question }}</span>
-          <span class="arrow">▾</span>
+          <span class="faq-icon">+</span>
         </div>
 
         <div class="faq-answer">
-          <p>{{ item.answer }}</p>
+          <div class="faq-answer-inner">
+            <p>{{ item.answer }}</p>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
 
   <section class="reservation" #contact>
@@ -334,82 +379,65 @@
           </div>
         </div>
       </div>
+      <ng-container *ngIf="reservationStep === 1">
       <div class="details-field delivery-mode-field">
-  <label>Automobilio pristatymas *</label>
+        <label>Automobilio pristatymas *</label>
 
-  <div class="delivery-mode-toggle">
-    <button
-      type="button"
-      class="delivery-mode-button"
-      [class.active]="deliveryMode === 'self'"
-      (click)="setDeliveryMode('self')">
-      Atvyksiu pats
-    </button>
+        <div class="delivery-mode-toggle">
+          <button type="button" class="delivery-mode-button" [class.active]="deliveryMode === 'self'"
+            (click)="setDeliveryMode('self')">
+            Atvyksiu pats
+          </button>
 
-    <button
-      type="button"
-      class="delivery-mode-button delivery-mode-button-highlight"
-      [class.active]="deliveryMode === 'pickup_return'"
-      (click)="setDeliveryMode('pickup_return')">
-      Nemokamas paėmimas ir grąžinimas
-    </button>
-  </div>
-</div>
+          <button type="button" class="delivery-mode-button delivery-mode-button-highlight"
+            [class.active]="deliveryMode === 'pickup_return'" (click)="setDeliveryMode('pickup_return')">
+            Nemokamas paėmimas ir grąžinimas nuo 50€
+          </button>
+          <label>Mažesniems užsakymams taikomas 20 € paėmimo ir pristatymo mokestis.</label>
+        </div>
+      </div>
 
       <div class="pickup-return-addresses" *ngIf="deliveryMode === 'pickup_return'">
-  <div class="details-field">
-    <label for="pickupAddress">Paėmimo adresas *</label>
-    <input
-      id="pickupAddress"
-      type="text"
-      [(ngModel)]="pickupAddress"
-      placeholder="Įveskite paėmimo adresą"
-      autocomplete="off" />
-  </div>
+        <div class="details-field">
+          <label for="pickupAddress">Paėmimo adresas - Įveskite gatvę, namo numerį, butą ir pašto kodą *</label>
+          <input id="pickupAddress" type="text" [(ngModel)]="pickupAddress" placeholder="Įveskite paėmimo adresą"
+            autocomplete="off" />
+        </div>
 
-  <label class="details-checkbox">
-    <input type="checkbox" [(ngModel)]="returnToDifferentAddress" />
-    <span>Grąžinti į kitą vietą</span>
-  </label>
+        <div class="details-field">
+          <label>Miestas</label>
+          <input type="text" value="Vilnius" disabled />
+          <div class="address-warning">
+            Paslauga teikiama tik Vilniaus mieste
+          </div>
+        </div>
 
-  <div class="details-field" *ngIf="returnToDifferentAddress">
-    <label for="returnAddress">Grąžinimo adresas *</label>
-    <input
-      id="returnAddress"
-      type="text"
-      [(ngModel)]="returnAddress"
-      placeholder="Įveskite grąžinimo adresą"
-      autocomplete="off" />
-  </div>
+        <label class="details-checkbox">
+          <input type="checkbox" [(ngModel)]="returnToDifferentAddress" />
+          <span>Grąžinti į kitą vietą</span>
+        </label>
 
-  <div class="details-field" *ngIf="!returnToDifferentAddress">
-    <label for="returnAddressReadonly">Grąžinimo adresas</label>
-    <input
-      id="returnAddressReadonly"
-      type="text"
-      [value]="pickupAddress"
-      readonly />
-  </div>
-</div>
-      <!-- <div class="summary-row" *ngIf="submittedReservationSummary.deliveryMode === 'pickup_return'">
-        <span>Paėmimo / grąžinimo adresas</span>
-        <strong>{{ submittedReservationSummary.pickupReturnAddress }}</strong>
+        <div class="details-field" *ngIf="returnToDifferentAddress">
+          <label for="returnAddress">Grąžinimo adresas - Įveskite gatvę, namo numerį, butą ir pašto kodą *</label>
+          <input id="returnAddress" type="text" [(ngModel)]="returnAddress" placeholder="Įveskite grąžinimo adresą"
+            autocomplete="off" />
+        </div>
+
+        <div class="details-field" *ngIf="returnToDifferentAddress">
+          <label>Miestas</label>
+          <input type="text" value="Vilnius" disabled />
+          <div class="address-warning">
+            Paslauga teikiama tik Vilniaus mieste
+          </div>
+        </div>
+
+        <div class="details-field" *ngIf="!returnToDifferentAddress">
+          <label for="returnAddressReadonly">Grąžinimo adresas</label>
+          <input id="returnAddressReadonly" type="text" [value]="pickupAddress" readonly />
+        </div>
       </div>
+      </ng-container>
 
-      <div class="summary-row" *ngIf="submittedReservationSummary.pickupLabel">
-        <span>Paėmimas</span>
-        <strong>{{ submittedReservationSummary.pickupLabel }}</strong>
-      </div>
-
-      <div class="summary-row" *ngIf="submittedReservationSummary.washLabel">
-        <span>Plovimas</span>
-        <strong>{{ submittedReservationSummary.washLabel }}</strong>
-      </div>
-
-      <div class="summary-row" *ngIf="submittedReservationSummary.returnLabel">
-        <span>Grąžinimas</span>
-        <strong>{{ submittedReservationSummary.returnLabel }}</strong>
-      </div> -->
       <div class="reservation-duration" *ngIf="reservationStep === 1 && totalDurationMin > 0">
         <div class="reservation-duration-label">
           Užtruks apie:
@@ -421,8 +449,11 @@
       </div>
       <!-- STEP 1 ACTION -->
       <div class="reservation-action" *ngIf="reservationStep === 1">
-        <button class="reservation-button" [disabled]="!selectedPackageId && selectedServices.length === 0"
-          (click)="openCalendar()">
+        <button class="reservation-button" [disabled]="
+    (!selectedPackageId && selectedServices.length === 0) ||
+    (deliveryMode === 'pickup_return' && !pickupAddress.trim()) ||
+    (deliveryMode === 'pickup_return' && returnToDifferentAddress && !returnAddress.trim())
+  " (click)="openCalendar()">
           <span>Pasirinkti laiką</span>
           <span class="arrow">→</span>
         </button>
@@ -430,121 +461,127 @@
 
       <!-- STEP 2: CALENDAR -->
       <div class="booking-calendar booking-calendar-full" *ngIf="reservationStep === 2">
-  <div class="booking-calendar-topbar">
-    <button type="button" class="calendar-back-button" (click)="backToSelection()">
-      ← Atgal
-    </button>
-  </div>
+        <div class="booking-calendar-topbar">
+          <button type="button" class="calendar-back-button" (click)="backToSelection()">
+            ← Atgal
+          </button>
+        </div>
 
-  <div class="booking-calendar-header">
-    <button type="button" class="month-nav" (click)="previousMonth()">←</button>
-    <div class="booking-calendar-title">{{ currentMonthLabel }}</div>
-    <button type="button" class="month-nav" (click)="nextMonth()">→</button>
-  </div>
+        <div class="booking-calendar-header">
+          <button type="button" class="month-nav" (click)="previousMonth()">←</button>
+          <div class="booking-calendar-title">{{ currentMonthLabel }}</div>
+          <button type="button" class="month-nav" (click)="nextMonth()">→</button>
+        </div>
 
-  <div class="booking-calendar-grid">
-    <div class="weekday" *ngFor="let day of weekdayLabels">{{ day }}</div>
+        <div class="booking-calendar-grid">
+          <div class="weekday" *ngFor="let day of weekdayLabels">{{ day }}</div>
 
-    <button
-      type="button"
-      class="calendar-day"
-      *ngFor="let day of calendarDays"
-      [class.outside]="!isCurrentMonth(day)"
-      [class.available]="canSelectDay(day)"
-      [class.selected]="isSelectedDay(day)"
-      [disabled]="!canSelectDay(day)"
-      (click)="selectDate(day)">
-      {{ day.getDate() }}
-    </button>
-  </div>
+          <button type="button" class="calendar-day" *ngFor="let day of calendarDays"
+            [class.outside]="!isCurrentMonth(day)" [class.available]="canSelectDay(day)"
+            [class.selected]="isSelectedDay(day)" [disabled]="!canSelectDay(day)" (click)="selectDate(day)">
+            {{ day.getDate() }}
+          </button>
+        </div>
 
-  <div class="booking-slots" *ngIf="selectedDate">
-  <div class="booking-slots-title">
-    {{ deliveryMode === 'self'
-        ? ('Laikai ' + (selectedDate | date:'yyyy-MM-dd'))
-        : (pickupReturnStep === 'pickup'
-            ? 'Pasirinkite paėmimo laiką'
-            : 'Pasirinkite grąžinimo laiką') }}
-  </div>
-
+        <div class="booking-slots" *ngIf="selectedDate">
   <!-- SELF -->
-  <div
-    class="booking-slot-grid"
-    *ngIf="deliveryMode === 'self' && timeSlots.length > 0">
-    <button
-      type="button"
-      class="booking-slot"
-      *ngFor="let slot of timeSlots"
-      [class.selected]="selectedTime === slot"
-      (click)="selectTime(slot)">
-      {{ slot }}
-    </button>
-  </div>
+  <ng-container *ngIf="deliveryMode === 'self'">
+    <div class="booking-slots-title">
+      Laikai {{ selectedDate | date:'yyyy-MM-dd' }}
+    </div>
 
-  <!-- PICKUP -->
-  <div
-    class="composite-slot-list"
-    *ngIf="deliveryMode === 'pickup_return' && pickupReturnStep === 'pickup' && pickupSlots.length > 0">
-    <button
-      type="button"
-      class="composite-slot-card"
-      *ngFor="let slot of pickupSlots"
-      [class.selected]="selectedPickupSlot === slot"
-      (click)="selectPickupSlot(slot)">
-      <div class="composite-slot-title">
-        Paėmimas
-      </div>
-      <div class="composite-slot-line">
-        {{ slot.label }}
-      </div>
-    </button>
-  </div>
+    <div class="booking-slot-grid" *ngIf="timeSlots.length > 0">
+      <button
+        type="button"
+        class="booking-slot"
+        *ngFor="let slot of timeSlots"
+        [class.selected]="selectedTime === slot"
+        (click)="selectTime(slot)">
+        {{ slot }}
+      </button>
+    </div>
 
-  <!-- RETURN -->
-  <div
-    class="composite-slot-list"
-    *ngIf="deliveryMode === 'pickup_return' && pickupReturnStep === 'return' && returnSlots.length > 0">
-    <button
-      type="button"
-      class="composite-slot-card"
-      *ngFor="let slot of returnSlots"
-      [class.selected]="selectedReturnSlot === slot"
-      (click)="selectReturnSlot(slot)">
-      <div class="composite-slot-title">
-        Grąžinimas
-      </div>
-      <div class="composite-slot-line">
-        {{ slot.label }}
-      </div>
-    </button>
-  </div>
+    <div class="booking-no-slots" *ngIf="timeSlots.length === 0">
+      Tą dieną laisvų laikų nėra
+    </div>
+  </ng-container>
 
-  <!-- EMPTY -->
-  <div
-    class="booking-no-slots"
-    *ngIf="
-      (deliveryMode === 'self' && timeSlots.length === 0) ||
-      (deliveryMode === 'pickup_return' && pickupReturnStep === 'pickup' && pickupSlots.length === 0) ||
-      (deliveryMode === 'pickup_return' && pickupReturnStep === 'return' && returnSlots.length === 0)
-    ">
-    Tą dieną laisvų laikų nėra
-  </div>
+  <!-- PICKUP + RETURN -->
+  <ng-container *ngIf="deliveryMode === 'pickup_return'">
+    <div class="pickup-return-slots-layout">
+      <!-- PICKUP -->
+      <div class="pickup-return-slot-section">
+        <div class="booking-slots-title">
+          Pasirinkite paėmimo laiką
+        </div>
+
+        <div class="composite-slot-list" *ngIf="pickupSlots.length > 0">
+          <button
+            type="button"
+            class="composite-slot-card"
+            *ngFor="let slot of pickupSlots"
+            [class.selected]="selectedPickupSlot === slot"
+            (click)="selectPickupSlot(slot)">
+            <div class="composite-slot-title">
+              Paėmimas
+            </div>
+            <div class="composite-slot-line">
+              {{ slot.label }}
+            </div>
+          </button>
+        </div>
+
+        <div class="booking-no-slots" *ngIf="pickupSlots.length === 0">
+          Tą dieną laisvų paėmimo laikų nėra
+        </div>
+      </div>
+
+      <!-- RETURN -->
+      <div class="pickup-return-slot-section">
+        <div class="booking-slots-title">
+          Pasirinkite grąžinimo laiką
+        </div>
+
+        <div class="composite-slot-list" *ngIf="selectedPickupSlot && returnSlots.length > 0">
+          <button
+            type="button"
+            class="composite-slot-card"
+            *ngFor="let slot of returnSlots"
+            [class.selected]="selectedReturnSlot === slot"
+            (click)="selectReturnSlot(slot)">
+            <div class="composite-slot-title">
+              Grąžinimas
+            </div>
+            <div class="composite-slot-line">
+              {{ slot.label }}
+            </div>
+          </button>
+        </div>
+
+        <div class="booking-no-slots" *ngIf="!selectedPickupSlot">
+          Pirmiausia pasirinkite paėmimo laiką
+        </div>
+
+        <div class="booking-no-slots" *ngIf="selectedPickupSlot && returnSlots.length === 0">
+          Pagal pasirinktą paėmimo laiką laisvų grąžinimo laikų nėra
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>
-</div>
-      <div
-  class="reservation-action"
-  *ngIf="
+      </div>
+      <div class="reservation-action" *ngIf="
     reservationStep === 2 &&
     (
       (deliveryMode === 'self' && selectedTime) ||
       (deliveryMode === 'pickup_return' && selectedPickupSlot && selectedReturnSlot)
     )
   ">
-  <button class="reservation-button" (click)="goToDetailsStep()">
-    <span>Toliau</span>
-    <span class="arrow">→</span>
-  </button>
-</div>
+        <button class="reservation-button" (click)="goToDetailsStep()">
+          <span>Toliau</span>
+          <span class="arrow">→</span>
+        </button>
+      </div>
       <div class="reservation-details" *ngIf="reservationStep === 3">
         <div class="booking-calendar-topbar">
           <button type="button" class="calendar-back-button" (click)="backToCalendar()">
@@ -588,7 +625,7 @@
               <input id="email" type="email" [(ngModel)]="customerEmail" />
             </div>
 
-            <div class="details-field">
+            <div class="details-field" *ngIf="deliveryMode === 'self'">
               <label for="address">Adresas *</label>
               <select id="address" [(ngModel)]="selectedAddress">
                 <option *ngFor="let address of addressOptions" [value]="address">
@@ -649,10 +686,27 @@
               <span>Trukmė</span>
               <strong>{{ formattedDuration }}</strong>
             </div>
-            <div class="summary-row">
+            <!-- <div class="summary-row" >
               <span>Adresas</span>
               <strong>{{ selectedAddress }}</strong>
+            </div> -->
+            <div class="summary-row" *ngIf="deliveryMode === 'self'">
+              <div>Adresas</div>
+              <strong>{{ selectedAddress }}</strong>
             </div>
+
+            <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+              <div>Paėmimo adresas</div>
+              <strong>{{ pickupAddress }}</strong>
+            </div>
+
+            <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+              <div>Grąžinimo adresas</div>
+              <strong>
+                {{ returnToDifferentAddress ? returnAddress : pickupAddress }}
+              </strong>
+            </div>
+            
             <div class="summary-row">
               <span>Apmokėjimas</span>
               <strong>Mokėti atvykus - Grynais</strong>
@@ -671,6 +725,12 @@
             <span>Paėmimo adresas</span>
             <strong>{{ pickupReturnAddress }}</strong>
           </div> -->
+          <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+  <span>Paėmimas ir grąžinimas</span>
+  <span>
+    {{ pickupReturnFee === 0 ? 'Nemokamai' : ('€' + pickupReturnFee) }}
+  </span>
+</div>
             <div class="summary-total">
               <span>Suma</span>
               <strong>€{{ totalPrice }}</strong>
@@ -732,9 +792,25 @@
               <strong>{{ submittedReservationSummary.email }}</strong>
             </div>
 
-            <div class="summary-row">
+            <!-- <div class="summary-row">
               <span>Adresas</span>
               <strong>{{ submittedReservationSummary.address }}</strong>
+            </div> -->
+            <div class="summary-row" *ngIf="deliveryMode === 'self'">
+              <div>Adresas</div>
+              <strong>{{ submittedReservationSummary.address }}</strong>
+            </div>
+
+            <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+              <div>Paėmimo adresas</div>
+              <strong>{{ pickupAddress }}</strong>
+            </div>
+
+            <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+              <div>Grąžinimo adresas</div>
+              <strong>
+                {{ returnToDifferentAddress ? returnAddress : pickupAddress }}
+              </strong>
             </div>
 
             <div class="summary-row">
@@ -752,10 +828,12 @@
               <strong>{{ submittedReservationSummary.duration }}</strong>
             </div>
 
+
             <div class="summary-row">
               <span>Apmokėjimas</span>
               <strong>Mokėti atvykus - Grynais</strong>
             </div>
+            
 
             <div class="summary-row">
               <span>Filmavimas</span>
@@ -783,7 +861,12 @@
                 <strong>€{{ service.price }}</strong>
               </div>
             </div>
-
+            <div class="summary-row" *ngIf="deliveryMode === 'pickup_return'">
+  <span>Paėmimas ir grąžinimas</span>
+  <span>
+    {{ pickupReturnFee === 0 ? 'Nemokamai' : ('€' + pickupReturnFee) }}
+  </span>
+</div>
             <div class="summary-total">
               <span>Suma</span>
               <strong>€{{ submittedReservationSummary.totalPrice }}</strong>
