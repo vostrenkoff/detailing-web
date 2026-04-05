@@ -8,10 +8,10 @@ import {
   bufferWhen,
   catchError,
   combineAll,
-  combineLatest,
+  combineLatest2 as combineLatest,
   combineLatestAll,
   combineLatestWith,
-  concat,
+  concat2 as concat,
   concatAll,
   concatMap,
   concatMapTo,
@@ -112,7 +112,7 @@ import {
   zip,
   zipAll,
   zipWith
-} from "./chunk-DG6EVI2Y.js";
+} from "./chunk-L4VALVKN.js";
 export {
   audit,
   auditTime,
