@@ -923,6 +923,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
       selection: {
         packageId: this.selectedPackage?.id || null,
         packageTitle: this.selectedPackage?.title || null,
+        packagePrice: this.selectedPackage?.price || null,
         services: this.selectedServiceItems.map(service => ({
           id: service.id,
           title: service.title,
@@ -1008,6 +1009,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   selection: {
     packageId: this.selectedPackage?.id || null,
     packageTitle: this.selectedPackage?.title || null,
+    packagePrice: this.selectedPackage?.price || null,
     services: this.selectedServiceItems.map(service => ({
       id: service.id,
       title: service.title,
@@ -1048,6 +1050,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   selection: {
     packageId: this.selectedPackage?.id || null,
     packageTitle: this.selectedPackage?.title || null,
+    packagePrice: this.selectedPackage?.price || null,
     services: this.selectedServiceItems.map(service => ({
       id: service.id,
       title: service.title,
@@ -1135,6 +1138,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   duration: this.formattedDuration,
   totalPrice: this.totalPrice,
   packageTitle: this.selectedPackage?.title || null,
+  packagePrice: this.selectedPackage?.price || null,
   services: this.selectedServiceItems.map(service => ({
     title: service.title,
     price: service.price
@@ -1244,13 +1248,17 @@ openCalendar() {
     return this.services.filter(service => this.selectedServices.includes(service.id));
   }
 
-  get servicesSubtotal(): number {
-  if (this.selectedPackage) {
-    return this.selectedPackage.price || 0;
+  get packageSubtotal(): number {
+    return this.selectedPackage?.price || 0;
   }
 
-  return this.selectedServiceItems.reduce((sum, service) => sum + (service.price || 0), 0);
-}
+  get additionalServicesSubtotal(): number {
+    return this.selectedServiceItems.reduce((sum, service) => sum + (service.price || 0), 0);
+  }
+
+  get servicesSubtotal(): number {
+    return this.packageSubtotal + this.additionalServicesSubtotal;
+  }
 
 get pickupReturnFee(): number {
   if (this.deliveryMode !== 'pickup_return') return 0;
@@ -1511,19 +1519,13 @@ selectDate(day: Date) {
     this.openedPackage = null;
   }
   get totalDurationMin(): number {
-    if (this.selectedPackageId) {
-      const pkg = this.packages.find(p => p.id === this.selectedPackageId);
-      return pkg?.durationMin || pkg?.duration || 0;
-    }
+    const packageDuration = this.selectedPackage?.durationMin || this.selectedPackage?.duration || 0;
+    const servicesDuration = this.selectedServices.reduce((total, id) => {
+      const service = this.services.find(s => s.id === id);
+      return total + (service?.durationMin || 0);
+    }, 0);
 
-    if (this.selectedServices.length > 0) {
-      return this.selectedServices.reduce((total, id) => {
-        const service = this.services.find(s => s.id === id);
-        return total + (service?.durationMin || 0);
-      }, 0);
-    }
-
-    return 0;
+    return packageDuration + servicesDuration;
   }
 
 beforeAfterPosition = 50;
@@ -1644,8 +1646,6 @@ onBeforeAfterTouch(event: TouchEvent): void {
   selectedServices: string[] = [];
 
 selectPackage(packageId: string) {
-  this.selectedServices = [];
-
   this.selectedPackageId =
     this.selectedPackageId === packageId ? null : packageId;
 
@@ -1653,8 +1653,6 @@ selectPackage(packageId: string) {
 }
 
 selectService(serviceId: string) {
-  this.selectedPackageId = null;
-
   const exists = this.selectedServices.includes(serviceId);
 
   if (exists) {

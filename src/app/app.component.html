@@ -53,7 +53,7 @@
       <div class="services-showcase-head">
         <h2 class="services-showcase-title">Mūsų paslaugos</h2>
         <p class="services-showcase-subtitle">
-          Rinkitės iš paruoštų paketų arba atskirų paslaugų pagal savo poreikius.
+          Rinkitės iš paruoštų rinkinių arba atskirų paslaugų pagal savo poreikius.
         </p>
       </div>
 
@@ -61,7 +61,7 @@
         <!-- LEFT: PACKAGES -->
         <div class="services-column">
           <div class="services-column-header">
-            <h3>Paketai</h3>
+            <h3>Rinkiniai</h3>
             <span>Populiariausi pasirinkimai</span>
           </div>
 
@@ -327,14 +327,14 @@
         <div class="reservation-eyebrow">Greita registracija internetu</div>
         <h1 class="reservation-title">Rezervuok laiką savo automobiliui</h1>
         <p class="reservation-subtitle">
-          Pasirink paketą arba atskiras paslaugas, laiką ir pateik savo duomenis per kelis žingsnius.
+          Pasirink rinkinį arba atskiras paslaugas, laiką ir pateik savo duomenis per kelis žingsnius.
         </p>
       </div>
 
       <!-- STEP 1: PACKAGES + SERVICES -->
       <div class="reservation-layout" *ngIf="reservationStep === 1">
         <!-- LEFT: PACKAGES -->
-        <div class="reservation-packages" [class.dimmed]="selectedServices.length > 0">
+        <div class="reservation-packages">
           <div class="package-card selectable" *ngFor="let pkg of packages"
             [class.selected]="selectedPackageId === pkg.id" (click)="selectPackage(pkg.id)">
             <div class="package-bg">
@@ -360,7 +360,7 @@
         </div>
 
         <!-- RIGHT: SERVICES -->
-        <div class="reservation-services" [class.dimmed]="selectedPackageId !== null">
+        <div class="reservation-services">
           <div class="services-box">
             <h2 class="services-title">Atskiros paslaugos</h2>
 
@@ -665,7 +665,7 @@
                 {{ selectedPackage.title }}
               </div>
 
-              <div class="summary-services" *ngIf="!selectedPackage && selectedServiceItems.length > 0">
+              <div class="summary-services" *ngIf="selectedServiceItems.length > 0">
                 <div class="summary-service-item" *ngFor="let service of selectedServiceItems">
                   {{ service.title }}
                 </div>
@@ -848,12 +848,17 @@
             </div>
 
             <div class="summary-block" *ngIf="submittedReservationSummary.packageTitle">
-              <div class="summary-label">Pasirinktas paketas</div>
-              <div class="summary-value">{{ submittedReservationSummary.packageTitle }}</div>
+              <div class="summary-label">Pasirinktas rinkinys</div>
+              <div class="summary-row">
+                <span>{{ submittedReservationSummary.packageTitle }}</span>
+                <strong *ngIf="submittedReservationSummary.packagePrice !== null">
+                  €{{ submittedReservationSummary.packagePrice }}
+                </strong>
+              </div>
             </div>
 
             <div class="summary-block"
-              *ngIf="!submittedReservationSummary.packageTitle && submittedReservationSummary.services?.length">
+              *ngIf="submittedReservationSummary.services?.length">
               <div class="summary-label">Paslaugos</div>
 
               <div class="summary-row" *ngFor="let service of submittedReservationSummary.services">
@@ -900,7 +905,7 @@
       </div>
 
       <div class="package-modal-services" *ngIf="openedPackage.services?.length">
-        <h3>Į paketą įeina:</h3>
+        <h3>Į rinkinį įeina:</h3>
 
         <div class="package-modal-service-item" *ngFor="let item of openedPackage.services">
           {{ item }}
