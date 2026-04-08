@@ -301,7 +301,7 @@ roundMinutesUpToNextHalfHour(totalMin: number): number {
 
 websitePackages: WebsiteServiceItem[] = [
   {
-    title: 'Mini paketas',
+    title: 'Mini rinkinys',
     shortDescription: 'Greitas ir tvarkingas automobilio atnaujinimas kasdienai.',
     fullDescription:
       'Puikus pasirinkimas tiems, kas nori greitai atgaivinti automobilio išvaizdą be pilno detailing proceso. Tinka reguliariai priežiūrai ir kasdien naudojamiems automobiliams.',
@@ -309,20 +309,20 @@ websitePackages: WebsiteServiceItem[] = [
     includes: ['Rankinis kėbulo plovimas', 'Saugus džiovinimas', 'Salono siurbimas', 'Kilimėlių valymas', 'Dulkių nuvalymas', 'Langų valymas (viduje ir išorėje)', 'Vaškas (kėbulo apsauga)']
   },
   {
-    title: 'Standartinis paketas',
+    title: 'Standartinis rinkinys',
     shortDescription: 'Populiariausias variantas kruopščiam salono ir išorės sutvarkymui.',
     fullDescription:
-      'Subalansuotas paketas klientams, kurie nori ne tik švaros, bet ir ryškesnio vizualinio rezultato. Idealiai tinka sezoniniam atnaujinimui arba prieš pardavimą.',
+      'Subalansuotas rinkinys klientams, kurie nori ne tik švaros, bet ir ryškesnio vizualinio rezultato. Idealiai tinka sezoniniam atnaujinimui arba prieš pardavimą.',
     price: 'nuo 90 €',
-    includes: [ 'Viskas iš Mini paketo', 'Detalus salono valymas', 'Plastiko valymas + apsauga', 'Bagažinės valymas', 'Detalus ratlankių ir arkų valymas']
+    includes: [ 'Viskas iš Mini rinkinio', 'Detalus salono valymas', 'Plastiko valymas + apsauga', 'Bagažinės valymas', 'Detalus ratlankių ir arkų valymas']
   },
   {
-    title: 'Premium paketas',
+    title: 'Premium pakerinkinystas',
     shortDescription: 'Maksimalus efektas tiems, kas nori geriausio rezultato.',
     fullDescription:
-      'Pilnas detailing paketas reikliems klientams. Daugiau dėmesio detalėms, daugiau kruopštumo, daugiau vizualinio efekto. Tinka tiems, kas nori, kad automobilis atrodytų kuo geriau.',
+      'Pilnas detailing rinkinys reikliems klientams. Daugiau dėmesio detalėms, daugiau kruopštumo, daugiau vizualinio efekto. Tinka tiems, kas nori, kad automobilis atrodytų kuo geriau.',
     price: 'nuo 180 €',
-    includes: [ 'Viskas iš Standartinio paketo', 'Sėdynių cheminis valymas + dėmių šalinimas', 'Tefloninė danga (premium kėbulo apsauga)']
+    includes: [ 'Viskas iš Standartinio rinkinio', 'Sėdynių cheminis valymas + dėmių šalinimas', 'Tefloninė danga (premium kėbulo apsauga)']
   }
 ];
 
@@ -442,7 +442,23 @@ websiteSingleServices: WebsiteServiceItem[] = [
     "Kelio nešvarumų valymas",
     "Kėbulo paviršiaus paruošimas"
   ]
-}
+  },
+  {
+    title: 'Kilimėlių cheminis valymas',
+    shortDescription: 'Giluminis kilimėlių valymas cheminiu būdu',
+    fullDescription:
+      'Naudojamos specialios cheminės priemonės, efektyviai pašalinančios įsigėrusius nešvarumus, dėmes ir kvapus iš tekstilinių ar guminių kilimėlių. Rezultatas — švaresni ir gaivesni kilimėliai.',
+    price: 'nuo 30 €',
+    includes: ['Cheminis valymas', 'Dėmių šalinimas', 'Gaivesnis kvapas']
+  },
+  {
+    title: 'Bagažinės cheminis valymas',
+    shortDescription: 'Giluminis bagažinės valymas cheminiu būdu',
+    fullDescription:
+      'Profesionalus bagažinės apmušalų ir dangos valymas naudojant chemines priemones. Pašalinami įsisenėję nešvarumai, dėmės ir nemalonūs kvapai — bagažinė grąžinama į tvarkingą būklę.',
+    price: 'nuo 50 €',
+    includes: ['Cheminis valymas', 'Dėmių šalinimas', 'Apmušalų priežiūra']
+  }
 ];
 
 selectedServiceInfo: SelectedWebsiteServiceInfo | null = null;
@@ -653,8 +669,8 @@ closeWebsiteServiceInfo(): void {
   customerEmail = '';
   discountCode = '';
   paymentMethod = 'moketi_atvykus';
-  selectedAddress = 'Pavilnės g. 5a, Vilnius';
-  addressOptions: string[] = ['Pavilnės g. 5a, Vilnius'];
+  selectedAddress = 'Pavilnės g., Vilnius';
+  addressOptions: string[] = ['Pavilnės g., Vilnius'];
 
   allowPromoFilming = false;
   countryCodes: string[] = ['+370', '+371', '+372', '+48', '+49', '+31', '+44'];
@@ -1166,7 +1182,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
     this.customerEmail = '';
     this.discountCode = '';
     this.paymentMethod = 'moketi_atvykus';
-    this.selectedAddress = 'Pavilnės g. 5a, Vilnius';
+    this.selectedAddress = 'Pavilnės g., Vilnius';
     this.allowPromoFilming = false;
 
     this.reservationSubmitted = false;
@@ -1239,6 +1255,7 @@ openCalendar() {
   this.reservationStep = 2;
   this.generateCalendarDays();
 }
+
   get selectedPackage(): BundleItem | null {
     if (!this.selectedPackageId) return null;
     return this.packages.find(p => p.id === this.selectedPackageId) || null;
@@ -1247,7 +1264,6 @@ openCalendar() {
   get selectedServiceItems(): ServiceItem[] {
     return this.services.filter(service => this.selectedServices.includes(service.id));
   }
-
   get packageSubtotal(): number {
     return this.selectedPackage?.price || 0;
   }
@@ -1258,7 +1274,8 @@ openCalendar() {
 
   get servicesSubtotal(): number {
     return this.packageSubtotal + this.additionalServicesSubtotal;
-  }
+
+}
 
 get pickupReturnFee(): number {
   if (this.deliveryMode !== 'pickup_return') return 0;
@@ -1653,6 +1670,7 @@ selectPackage(packageId: string) {
 }
 
 selectService(serviceId: string) {
+
   const exists = this.selectedServices.includes(serviceId);
 
   if (exists) {
