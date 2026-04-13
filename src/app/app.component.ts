@@ -15,7 +15,7 @@ import {
 import { AvailabilityService, AvailabilityItem } from './services/availability.service';
 import { inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Firestore, collection, addDoc, doc, writeBatch, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, writeBatch, serverTimestamp, query, where, getDocs, getDoc, setDoc } from '@angular/fire/firestore';
 import { BusySlotsService, BusySlot } from './services/busy-slots.service';
 import { take } from 'rxjs/operators';
 import {
@@ -317,7 +317,7 @@ websitePackages: WebsiteServiceItem[] = [
     includes: [ 'Viskas iš Mini rinkinio', 'Detalus salono valymas', 'Plastiko valymas + apsauga', 'Bagažinės valymas', 'Detalus ratlankių ir arkų valymas']
   },
   {
-    title: 'Premium pakerinkinystas',
+    title: 'Premium rinkinys',
     shortDescription: 'Maksimalus efektas tiems, kas nori geriausio rezultato.',
     fullDescription:
       'Pilnas detailing rinkinys reikliems klientams. Daugiau dėmesio detalėms, daugiau kruopštumo, daugiau vizualinio efekto. Tinka tiems, kas nori, kad automobilis atrodytų kuo geriau.',
@@ -668,6 +668,9 @@ closeWebsiteServiceInfo(): void {
   customerPhone = '';
   customerEmail = '';
   discountCode = '';
+  promoState: 'idle' | 'checking' | 'valid' | 'invalid' | 'used' | 'limit' = 'idle';
+  promoError = '';
+  appliedPromo: { promoname: string; value: number } | null = null;
   paymentMethod = 'moketi_atvykus';
   selectedAddress = 'Pavilnės g., Vilnius';
   addressOptions: string[] = ['Pavilnės g., Vilnius'];
@@ -684,6 +687,64 @@ closeWebsiteServiceInfo(): void {
     const randomPart = Math.floor(100 + Math.random() * 900); // 100–999
 
     return `${datePart}-${randomPart}`;
+  }
+
+  async applyPromoCode() {
+    const code = this.discountCode.trim().toUpperCase();
+    if (!code) return;
+
+    this.promoState = 'checking';
+    this.promoError = '';
+    this.appliedPromo = null;
+
+    try {
+      // 1. Find promo by promoname
+      const promoQuery = query(
+        collection(this.firestore, 'promocodes'),
+        where('promoname', '==', code)
+      );
+      const promoSnap = await getDocs(promoQuery);
+
+      if (promoSnap.empty) {
+        this.promoState = 'invalid';
+        this.promoError = 'Toks kodas neegzistuoja.';
+        return;
+      }
+
+      const promoData = promoSnap.docs[0].data() as { promoname: string; value: number; usage: number };
+      const maxUsage = promoData.usage ?? 1;
+
+      // 2. Check how many times this phone has used this promo
+      const phone = this.fullPhoneNumber;
+      if (phone) {
+        const clientRef = doc(this.firestore, 'clients', phone);
+        const clientSnap = await getDoc(clientRef);
+
+        if (clientSnap.exists()) {
+          const clientData = clientSnap.data() as { usedPromos?: { [code: string]: number } };
+          const usedCount = clientData.usedPromos?.[code] ?? 0;
+
+          if (usedCount >= maxUsage) {
+            this.promoState = 'limit';
+            this.promoError = 'Šis kodas jau buvo panaudotas.';
+            return;
+          }
+        }
+      }
+
+      this.appliedPromo = { promoname: promoData.promoname, value: promoData.value };
+      this.promoState = 'valid';
+    } catch (e) {
+      this.promoState = 'invalid';
+      this.promoError = 'Klaida tikrinant kodą.';
+    }
+  }
+
+  clearPromo() {
+    this.discountCode = '';
+    this.appliedPromo = null;
+    this.promoState = 'idle';
+    this.promoError = '';
   }
 get isDetailsStepValid(): boolean {
   const hasTransportAddress =
@@ -722,6 +783,37 @@ setDeliveryMode(mode: 'self' | 'pickup_return'): void {
 }
  async submitReservation() {
   if (!this.isDetailsStepValid || this.isSubmittingReservation) return;
+
+  // Re-validate promo at submit time to prevent bypass via entering phone after applying code
+  if (this.appliedPromo) {
+    const code = this.appliedPromo.promoname;
+    const promoQuery = query(
+      collection(this.firestore, 'promocodes'),
+      where('promoname', '==', code)
+    );
+    const promoSnap = await getDocs(promoQuery);
+
+    if (promoSnap.empty) {
+      this.appliedPromo = null;
+      this.promoState = 'invalid';
+      this.promoError = 'Nuolaidos kodas nebegalioja.';
+      return;
+    }
+
+    const promoData = promoSnap.docs[0].data() as { promoname: string; value: number; usage: number };
+    const clientRef = doc(this.firestore, 'clients', this.fullPhoneNumber);
+    const clientSnap = await getDoc(clientRef);
+    const usedCount = clientSnap.exists()
+      ? ((clientSnap.data() as any).usedPromos?.[code] ?? 0)
+      : 0;
+
+    if (usedCount >= (promoData.usage ?? 1)) {
+      this.appliedPromo = null;
+      this.promoState = 'limit';
+      this.promoError = 'Šis kodas jau buvo panaudotas šiuo numeriu.';
+      return;
+    }
+  }
 
   this.isSubmittingReservation = true;
 
@@ -1095,6 +1187,21 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
 
     await batch.commit();
 
+    // Record promo usage per phone number
+    if (this.appliedPromo && this.fullPhoneNumber) {
+      const clientRef = doc(this.firestore, 'clients', this.fullPhoneNumber);
+      const clientSnap = await getDoc(clientRef);
+      const code = this.appliedPromo.promoname;
+
+      if (clientSnap.exists()) {
+        const data = clientSnap.data() as { usedPromos?: { [key: string]: number } };
+        const current = data.usedPromos?.[code] ?? 0;
+        await setDoc(clientRef, { usedPromos: { ...data.usedPromos, [code]: current + 1 } }, { merge: true });
+      } else {
+        await setDoc(clientRef, { usedPromos: { [code]: 1 } });
+      }
+    }
+
     this.createdReservationId = reservationRef.id;
     this.reservationSubmitted = true;
     this.reservationStep = 4;
@@ -1181,6 +1288,9 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
     this.customerPhone = '';
     this.customerEmail = '';
     this.discountCode = '';
+    this.appliedPromo = null;
+    this.promoState = 'idle';
+    this.promoError = '';
     this.paymentMethod = 'moketi_atvykus';
     this.selectedAddress = 'Pavilnės g., Vilnius';
     this.allowPromoFilming = false;
@@ -1282,8 +1392,20 @@ get pickupReturnFee(): number {
   return this.servicesSubtotal >= 50 ? 0 : 20;
 }
 
+get discountAmount(): number {
+  if (!this.appliedPromo) return 0;
+  const base = this.servicesSubtotal + this.pickupReturnFee;
+  if (this.appliedPromo.value < 1) {
+    // percentage discount, e.g. 0.4 = 40% off
+    return Math.round(base * this.appliedPromo.value * 100) / 100;
+  } else {
+    // fixed euro discount, capped at base price
+    return Math.min(this.appliedPromo.value, base);
+  }
+}
+
 get totalPrice(): number {
-  return this.servicesSubtotal + this.pickupReturnFee;
+  return this.servicesSubtotal + this.pickupReturnFee - this.discountAmount;
 }
   get hasPaidPickupReturn(): boolean {
   return this.deliveryMode === 'pickup_return' && this.pickupReturnFee > 0;

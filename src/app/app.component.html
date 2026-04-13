@@ -72,11 +72,6 @@
                 <div class="service-main-left">
                   <div class="service-title-row">
                     <div class="service-title">{{ item.title }}</div>
-
-                    <button type="button" class="service-info-button"
-                      (click)="toggleWebsiteServiceInfo('package', i, $event)">
-                      i
-                    </button>
                   </div>
 
                   <div class="service-desc">
@@ -84,8 +79,15 @@
                   </div>
                 </div>
 
-                <div class="service-price">
-                  {{ item.price }}
+                <div class="service-main-right">
+                  <div class="service-price">
+                    {{ item.price }}
+                  </div>
+
+                  <button type="button" class="service-info-button"
+                    (click)="toggleWebsiteServiceInfo('package', i, $event)">
+                    i
+                  </button>
                 </div>
               </div>
 
@@ -636,7 +638,40 @@
 
             <div class="details-field">
               <label for="discount">Nuolaidos kodas</label>
-              <input id="discount" type="text" [(ngModel)]="discountCode" />
+              <div class="promo-input-row">
+                <input
+                  id="discount"
+                  type="text"
+                  [(ngModel)]="discountCode"
+                  [disabled]="promoState === 'valid'"
+                  (keyup.enter)="applyPromoCode()"
+                  placeholder="KODAS"
+                  class="promo-input"
+                  [class.promo-input--valid]="promoState === 'valid'"
+                  [class.promo-input--invalid]="promoState === 'invalid' || promoState === 'limit'"
+                />
+                <button
+                  *ngIf="promoState !== 'valid'"
+                  type="button"
+                  class="promo-apply-btn"
+                  [disabled]="promoState === 'checking' || !discountCode.trim()"
+                  (click)="applyPromoCode()">
+                  {{ promoState === 'checking' ? '...' : 'Taikyti' }}
+                </button>
+                <button
+                  *ngIf="promoState === 'valid'"
+                  type="button"
+                  class="promo-clear-btn"
+                  (click)="clearPromo()">
+                  ✕
+                </button>
+              </div>
+              <div class="promo-message promo-message--error" *ngIf="promoError">
+                {{ promoError }}
+              </div>
+              <div class="promo-message promo-message--success" *ngIf="promoState === 'valid' && appliedPromo">
+                Pritaikyta: {{ appliedPromo.value < 1 ? (appliedPromo.value * 100 | number:'1.0-0') + '% nuolaida' : '−€' + appliedPromo.value + ' nuolaida' }}
+              </div>
             </div>
 
             <div class="details-field">
@@ -731,6 +766,10 @@
     {{ pickupReturnFee === 0 ? 'Nemokamai' : ('€' + pickupReturnFee) }}
   </span>
 </div>
+            <div class="summary-row summary-discount" *ngIf="appliedPromo">
+              <span>Nuolaida ({{ appliedPromo.promoname }})</span>
+              <strong class="discount-value">−€{{ discountAmount }}</strong>
+            </div>
             <div class="summary-total">
               <span>Suma</span>
               <strong>€{{ totalPrice }}</strong>

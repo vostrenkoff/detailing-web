@@ -386,8 +386,22 @@
 }
 
 .nav a.active {
-  color: #ffffff;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
+  background: #ff4d4f;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.35);
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    opacity: 0.96;
+    box-shadow: 0 12px 30px rgba(255, 77, 79, 0.45);
+  }
 }
 
 .logo {
@@ -426,6 +440,32 @@
 
   .logo-mobile {
     display: block;
+  }
+
+  .header {
+    top: 12px;
+    width: calc(100% - 32px);
+    height: 58px;
+    border-radius: 14px;
+  }
+
+  .header-inner {
+    padding: 0 16px;
+  }
+
+  .logo img,
+  .logo-mobile {
+    height: 28px;
+  }
+
+  .nav a {
+    font-size: 14px;
+  }
+
+  .nav a.active {
+    padding: 8px 18px;
+    font-size: 13px;
+    box-shadow: 0 6px 18px rgba(255, 77, 79, 0.35);
   }
 }
 
@@ -1971,6 +2011,93 @@ html, body {
   margin-top: 28px;
 }
 
+.promo-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.promo-input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &--valid {
+    border-color: #22c55e !important;
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+  }
+
+  &--invalid {
+    border-color: #ef4444 !important;
+  }
+}
+
+.promo-apply-btn {
+  flex: 0 0 auto;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #333;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.promo-clear-btn {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+.promo-message {
+  font-size: 13px;
+  margin-top: -4px;
+
+  &--error {
+    color: #dc2626;
+  }
+
+  &--success {
+    color: #16a34a;
+    font-weight: 600;
+  }
+}
+
+.summary-discount {
+  color: #16a34a;
+
+  .discount-value {
+    color: #16a34a;
+  }
+}
+
 @media (max-width: 900px) {
   .reservation-details-layout {
     grid-template-columns: 1fr;
@@ -2528,7 +2655,13 @@ html, body {
 .service-main-left {
   flex: 1;
   min-width: 0;
-  width: 100%;
+}
+
+.service-main-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .service-title-row {
@@ -2780,8 +2913,17 @@ html, body {
 
   
 
+  .service-main {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .service-main-right {
+    justify-content: flex-start;
+  }
+
   .service-price {
-    align-self: flex-start;
+    align-self: auto;
   }
 
   .service-title {
