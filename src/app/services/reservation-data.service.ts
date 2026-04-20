@@ -31,15 +31,15 @@ export interface ServiceItem {
   providedIn: 'root'
 })
 export class ReservationDataService {
-  private firestore = inject(Firestore);
+  private firestore = inject(Firestore, { optional: true });
 
   getBundles(): Observable<BundleItem[]> {
-    const ref = collection(this.firestore, 'bundles');
+    const ref = collection(this.firestore!, 'bundles');
     return collectionData(ref, { idField: 'id' }) as Observable<BundleItem[]>;
   }
 
   getServices(): Observable<ServiceItem[]> {
-    const ref = collection(this.firestore, 'services');
+    const ref = collection(this.firestore!, 'services');
     return collectionData(ref, { idField: 'id' }) as Observable<ServiceItem[]>;
   }
 }

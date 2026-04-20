@@ -18,6 +18,8 @@ import { FormsModule } from '@angular/forms';
 import { Firestore, collection, addDoc, doc, writeBatch, serverTimestamp, query, where, getDocs, getDoc, setDoc } from '@angular/fire/firestore';
 import { BusySlotsService, BusySlot } from './services/busy-slots.service';
 import { take } from 'rxjs/operators';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import {
   ReservationDataService,
   BundleItem,
@@ -512,8 +514,10 @@ closeWebsiteServiceInfo(): void {
   private isReviewAnimating = false;
 
   ngOnInit(): void {
-    this.setupReviewsSlider();
-    this.startReviewsAutoplay();
+    if (isPlatformBrowser(this.platformId)) {
+      this.setupReviewsSlider();
+      this.startReviewsAutoplay();
+    }
   }
 
   ngOnDestroy(): void {
@@ -616,6 +620,7 @@ closeWebsiteServiceInfo(): void {
     event.stopPropagation();
     this.openedPackage = pkg;
   }
+  private platformId = inject(PLATFORM_ID);
   private availabilityService = inject(AvailabilityService);
   private busySlotsService = inject(BusySlotsService);
   busySlots: BusySlot[] = [];
@@ -655,7 +660,7 @@ closeWebsiteServiceInfo(): void {
     return startA < endB && endA > startB;
   }
 
-  private firestore = inject(Firestore);
+  private firestore = inject(Firestore, { optional: true });
   isSubmittingReservation = false;
   reservationSubmitted = false;
   createdReservationId: string | null = null;
@@ -700,7 +705,7 @@ closeWebsiteServiceInfo(): void {
     try {
       // 1. Find promo by promoname
       const promoQuery = query(
-        collection(this.firestore, 'promocodes'),
+        collection(this.firestore!, 'promocodes'),
         where('promoname', '==', code)
       );
       const promoSnap = await getDocs(promoQuery);
@@ -717,7 +722,7 @@ closeWebsiteServiceInfo(): void {
       // 2. Check how many times this phone has used this promo
       const phone = this.fullPhoneNumber;
       if (phone) {
-        const clientRef = doc(this.firestore, 'clients', phone);
+        const clientRef = doc(this.firestore!, 'clients', phone);
         const clientSnap = await getDoc(clientRef);
 
         if (clientSnap.exists()) {
@@ -788,7 +793,7 @@ setDeliveryMode(mode: 'self' | 'pickup_return'): void {
   if (this.appliedPromo) {
     const code = this.appliedPromo.promoname;
     const promoQuery = query(
-      collection(this.firestore, 'promocodes'),
+      collection(this.firestore!, 'promocodes'),
       where('promoname', '==', code)
     );
     const promoSnap = await getDocs(promoQuery);
@@ -801,7 +806,7 @@ setDeliveryMode(mode: 'self' | 'pickup_return'): void {
     }
 
     const promoData = promoSnap.docs[0].data() as { promoname: string; value: number; usage: number };
-    const clientRef = doc(this.firestore, 'clients', this.fullPhoneNumber);
+    const clientRef = doc(this.firestore!, 'clients', this.fullPhoneNumber);
     const clientSnap = await getDoc(clientRef);
     const usedCount = clientSnap.exists()
       ? ((clientSnap.data() as any).usedPromos?.[code] ?? 0)
@@ -1046,15 +1051,15 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
       }
     };
 
-    const batch = writeBatch(this.firestore);
-    const reservationRef = doc(collection(this.firestore, 'reservations'));
+    const batch = writeBatch(this.firestore!);
+    const reservationRef = doc(collection(this.firestore!, 'reservations'));
 
     batch.set(reservationRef, reservationPayload);
 
     if (isPickupReturn) {
-  const busySlotPickupRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
-  const busySlotWashRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
-  const busySlotReturnRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+  const busySlotPickupRef = doc(collection(this.firestore!, `busySlots/${dateKey}/slots`));
+  const busySlotWashRef = doc(collection(this.firestore!, `busySlots/${dateKey}/slots`));
+  const busySlotReturnRef = doc(collection(this.firestore!, `busySlots/${dateKey}/slots`));
 
   batch.set(busySlotPickupRef, {
     type: 'pickup',
@@ -1086,8 +1091,8 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
     createdAt: serverTimestamp()
   });
 
-  const pickupTaskRef = doc(collection(this.firestore, 'pickupsDropoffs'));
-  const returnTaskRef = doc(collection(this.firestore, 'pickupsDropoffs'));
+  const pickupTaskRef = doc(collection(this.firestore!, 'pickupsDropoffs'));
+  const returnTaskRef = doc(collection(this.firestore!, 'pickupsDropoffs'));
 
   batch.set(pickupTaskRef, {
   type: 'pickup',
@@ -1171,7 +1176,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
   allowPromoFilming: this.allowPromoFilming
 });
 } else {
-  const busySlotRef = doc(collection(this.firestore, `busySlots/${dateKey}/slots`));
+  const busySlotRef = doc(collection(this.firestore!, `busySlots/${dateKey}/slots`));
 
   batch.set(busySlotRef, {
     type: 'wash',
@@ -1189,7 +1194,7 @@ returnToDifferentAddress: isPickupReturn ? this.returnToDifferentAddress : null,
 
     // Record promo usage per phone number
     if (this.appliedPromo && this.fullPhoneNumber) {
-      const clientRef = doc(this.firestore, 'clients', this.fullPhoneNumber);
+      const clientRef = doc(this.firestore!, 'clients', this.fullPhoneNumber);
       const clientSnap = await getDoc(clientRef);
       const code = this.appliedPromo.promoname;
 
@@ -1876,19 +1881,17 @@ selectService(serviceId: string) {
   }
 
   ngAfterViewInit() {
-
+    if (isPlatformBrowser(this.platformId)) {
     this.availabilityService.getAvailability(this.bookingUserId).subscribe(data => {
       this.availabilityItems = data;
       this.generateCalendarDays();
     });
 
     this.reservationDataService.getBundles().subscribe(data => {
-      console.log('BUNDLES FROM DB:', data);
       this.packages = data;
     });
 
     this.reservationDataService.getServices().subscribe(data => {
-      console.log('SERVICES FROM DB:', data);
       this.services = data;
     });
     /* ===============================
@@ -1974,6 +1977,7 @@ selectService(serviceId: string) {
     setTimeout(() => {
       this.showScrollHint = true;
     }, 1000);
+    }
 
   }
 }

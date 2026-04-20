@@ -18,10 +18,10 @@ export interface AvailabilityItem {
   providedIn: 'root'
 })
 export class AvailabilityService {
-  private firestore = inject(Firestore);
+  private firestore = inject(Firestore, { optional: true });
 
   getAvailability(userId: string): Observable<AvailabilityItem[]> {
-    const ref = collection(this.firestore, `users/${userId}/availability`);
+    const ref = collection(this.firestore!, `users/${userId}/availability`);
     return collectionData(ref, { idField: 'id' }) as Observable<AvailabilityItem[]>;
   }
 }

@@ -20,10 +20,10 @@ export interface BusySlot {
   providedIn: 'root'
 })
 export class BusySlotsService {
-  private firestore = inject(Firestore);
+  private firestore = inject(Firestore, { optional: true });
 
   getBusySlotsByDate(dateKey: string): Observable<BusySlot[]> {
-    const ref = collection(this.firestore, `busySlots/${dateKey}/slots`);
+    const ref = collection(this.firestore!, `busySlots/${dateKey}/slots`);
     return collectionData(ref, { idField: 'id' }) as Observable<BusySlot[]>;
   }
 }
